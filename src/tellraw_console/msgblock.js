@@ -1,4 +1,4 @@
-import {Formatting} from './text_formattings.js'
+import {Formatting} from '../format.js'
 
 export class MsgBlock extends Array {
     static defaultColor = Formatting.white;

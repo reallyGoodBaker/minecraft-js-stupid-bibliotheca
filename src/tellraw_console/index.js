@@ -1,7 +1,7 @@
 import {basicTypeMsg} from './type_wrapper.js'
 import {toString} from './obj2str.js';
 import {getRawTeller} from './sender.js'
-import {Formatting} from './text_formattings.js'
+import {Formatting} from '../format.js'
 
 export function initConsole(commander) {
     const send = getRawTeller(commander);
