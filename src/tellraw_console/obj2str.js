@@ -57,17 +57,17 @@ function keyValTile(obj, k, propColor) {
 function getDetailsMsg(obj, showSG) {
     let propColor = objectProp.normal;
     let classPrefix = getClassPrefix(obj);
-    let props;
+    let props = [];
 
     let msg = mbfs('', style('normal'), `${classPrefix} {\n`);
-    props = props.concat(getObjPropNames()).concat(getObjSymbols());
+    props = props.concat(getObjPropNames(obj)).concat(getObjSymbols(obj));
 
-    msg += getObjPropNames(obj).reduce((pre, cur) => {
+    msg += props.reduce((pre, cur) => {
         return [...pre, keyValTile(obj, cur, propColor)];
     }, []).join(', ') + '\n';
 
     msg += '}';
-    console.log(msg);
+    
     return msg;
 }
 

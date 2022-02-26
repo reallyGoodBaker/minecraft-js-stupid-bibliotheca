@@ -1,3 +1,4 @@
+import { Formatting } from '../format.js';
 import {mbf, style} from './msgblock.js'
 
 function fakeNativeToString(name, ...args) {
@@ -16,6 +17,7 @@ class RawTeller {
 
     send(msg, selector='@a[tag=debugger]') {
         this.sender.runCommand(`tellraw ${selector} {"rawtext": [{"text": "${this.header} ${msg}"}]}`);
+        //this.sender.runCommand(msg, selector);
     }
 
     setSender(s) {

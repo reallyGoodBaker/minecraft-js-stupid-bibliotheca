@@ -1,21 +1,31 @@
-import {basicTypeMsg} from './type_wrapper.js'
+import {basicTypeMsg, safeString} from './type_wrapper.js'
 import {toString} from './obj2str.js';
 import {getRawTeller} from './sender.js'
 import {Formatting} from '../format.js'
+import { mbfs, style } from './msgblock.js';
 
-export function initConsole(commander) {
-    const send = getRawTeller(commander);
+export function initConsole(commander, selector) {
+    const rawSend = getRawTeller(commander);
+    const send = msg => rawSend(msg, selector);
+
+    function buildMsg(normalStyle = '', ...args) {
+        let res;
+        Formatting.normal = normalStyle;
+        res = args.reduce((pre, cur) => {
+            return [
+                ...pre,
+                typeof cur === 'object'? toString(cur, true): 
+                    typeof cur === 'string'? mbfs('', style('normal'), safeString(cur)): basicTypeMsg(cur)
+            ]
+        }, []).join('  ');
+        Formatting.normal = '';
+        return res;
+    }
 
     function log(...args) {
         let res;
         try {
-            Formatting.normal = Formatting.white;
-            res = args.reduce((pre, cur) => {
-                return [
-                    ...pre,
-                    typeof cur === 'object'? toString(cur, false): basicTypeMsg(cur)
-                ]
-            }, []).join('    ');
+            res = buildMsg(style('white'), ...args);
         } catch (e) {
             error(e)
         }
@@ -24,12 +34,14 @@ export function initConsole(commander) {
     }
 
     function error(...args) {
+        let err;
         try {
-            Formatting.normal = Formatting.red;
-            log(...args);
+            err = buildMsg(style('red'), ...args)
         } catch (e) {
-            error(e);
+            send(mbfs('', style('red'), 'Fatal Error: You should have crashed you game!'));
         }
+
+        send(err);
     }
 
     function warn(...args) {
