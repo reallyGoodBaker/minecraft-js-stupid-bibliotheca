@@ -6,8 +6,8 @@ We want to make the interfaces are not as terrible as the mojang api
 mjsb forever
 ## File dirs
 ```
-[memberName]
--- [memberCode]
+src
+-- [writtenCode]
 dist
 -- [packagedCode]
 
