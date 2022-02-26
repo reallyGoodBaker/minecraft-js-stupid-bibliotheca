@@ -3,4 +3,12 @@ This is a library wrapper of [the interfaces related to gametest](https://docs.m
 # What we want to do
 We want to make the interfaces are not as terrible as the mojang api
 # What we want to say
-mjsb is our library
+mjsb forever
+## File dirs
+```
+src
+-- [writtenCode]
+dist
+-- [packagedCode]
+
+```
