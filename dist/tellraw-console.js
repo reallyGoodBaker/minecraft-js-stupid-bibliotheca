@@ -161,7 +161,7 @@ function keyValTile(obj, k, propColor) {
     vs = typeof obj[k] === 'object'?
         parseObjValue(obj[k]): basicTypeMsg(obj[k]);
 
-    return mbfs('', style('normal'), ks, ':  ', vs);
+    return mbfs('', style('normal'), ks, ':  ', vs.replace(/\n/g, '\n  '));
 
 }
 
@@ -170,12 +170,12 @@ function getDetailsMsg(obj, showSG) {
     let classPrefix = getClassPrefix(obj);
     let props = [];
 
-    let msg = mbfs('', style('normal'), `${classPrefix} {\n`);
+    let msg = mbfs('', style('normal'), `${classPrefix? classPrefix + ' ': ''}{\n`);
     props = props.concat(getObjPropNames(obj)).concat(getObjSymbols(obj));
 
     msg += props.reduce((pre, cur) => {
         return [...pre, keyValTile(obj, cur, propColor)];
-    }, []).join(', ') + '\n';
+    }, []).join(', \n') + '\n';
 
     msg += '}';
     
