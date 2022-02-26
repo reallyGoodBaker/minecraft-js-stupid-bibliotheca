@@ -12,3 +12,9 @@ dist
 -- [packagedCode]
 
 ```
+## Plan
+We will use init functions to get objects to change code easily(because mojang's api often chnages,too)
+We wiil add the support of formatters, minecraft icon symbols, rawjson, and so on at soon.
+We may add some ui support if mojang add ui support but it's stiil terrible
+
+Good luck, This is the end
