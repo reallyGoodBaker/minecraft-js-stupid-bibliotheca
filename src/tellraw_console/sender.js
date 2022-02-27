@@ -1,4 +1,3 @@
-import { Formatting } from '../format.js';
 import {mbf, style} from './msgblock.js'
 
 function fakeNativeToString(name, ...args) {
@@ -6,52 +5,76 @@ function fakeNativeToString(name, ...args) {
     return toString;
 }
 
-class RawTeller {
-    sender = null;
+export class RawTeller {
+    static sender = null;
+    /**
+     * @type {[string, string, any][]}
+     */
+    msgQueue = [];
+    pending = false;
 
     static header = '';
+    /**
+     * @type {RawTeller}
+     */
+    static rawTeller;
     
     constructor(header) {
         this.header = header || RawTeller.header;
+        RawTeller.rawTeller = this;
     }
 
     send(msg, selector='@a[tag=debugger]') {
-        this.sender.runCommand(`tellraw ${selector} {"rawtext": [{"text": "${this.header} ${msg}"}]}`);
-        //this.sender.runCommand(msg, selector);
+        this.msgQueue.push([selector, msg, RawTeller.sender]);
+    }
+
+    pend() {
+        this.pending = true;
+    }
+
+    active() {
+        if (this.pending) return;
+
+        this.msgQueue.forEach(msg => {
+            const [selector, message, sender] = msg;
+            sender.runCommand(`tellraw ${selector} {"rawtext": [{"text": "${this.header} ${message}"}]}`);
+        });
+
+        this.msgQueue = [];
     }
 
     setSender(s) {
-        this.sender = s;
+        RawTeller.sender = s;
     }
 
 }
 
-const untrustedHeader = mbf('', style('red'), '[Untrusted] ');
+// const untrustedHeader = mbf('', style('red'), '[Untrusted] ');
 
-export class UntrustedRawTeller extends RawTeller {
+// export class UntrustedRawTeller extends RawTeller {
 
-    constructor(header) {
-        super(header);
+//     constructor(header) {
+//         super(header);
 
-        this.send = this.sendUntrusted;
-    }
+//         this.send = this.sendUntrusted;
+//     }
 
-    sendUntrusted(msg, selector='@a[tag=debugger]') {
-        try {
-            this.sender.runCommand(`tellraw ${selector} {"rawtext": [{"text": "${untrustedHeader + msg}"}]}`);
-        } catch (error) {
-            this.onError.call(undefined, e, msg, selector);
-        }
-    }
+//     sendUntrusted(msg, selector='@a[tag=debugger]') {
+//         try {
+//             this.sender.runCommand(`tellraw ${selector} {"rawtext": [{"text": "${untrustedHeader + msg}"}]}`);
+//         } catch (error) {
+//             this.onError.call(undefined, e, msg, selector);
+//         }
+//     }
 
-    setSender(s) {
-        this.sender = s;
-    }
+//     setSender(s) {
+//         this.sender = s;
+//     }
 
-    onError(e) {
-    }
+//     onError(e) {
+//     }
 
-}
+// }
 
 /**
  * @param {any} commander 
@@ -67,6 +90,10 @@ export function getRawTeller(commander) {
     }
 
     send.toString = fakeNativeToString('send', 'msg', 'selector');
+
+    send.update = () => {
+        sender.active();
+    }
 
     let senderProxy = new Proxy(send, {
         get(t, p) {

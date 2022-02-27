@@ -23,6 +23,10 @@ export class MsgBlock extends Array {
         return color + style + msg + Formatting.reset;
     }
 
+    toString() {
+        return this.toTellrawString();
+    }
+
 }
 
 export function mb(iterable) {

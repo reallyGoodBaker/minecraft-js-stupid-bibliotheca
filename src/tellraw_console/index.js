@@ -2,23 +2,22 @@ import {basicTypeMsg, safeString} from './type_wrapper.js'
 import {toString} from './obj2str.js';
 import {getRawTeller} from './sender.js'
 import {Formatting} from '../format.js'
-import { mbfs, style } from './msgblock.js';
+import { style, mbf } from './msgblock.js';
 
 export function initConsole(commander, selector) {
     const rawSend = getRawTeller(commander);
-    const send = msg => rawSend(msg, selector);
+    const send = async msg => rawSend(await msg, selector);
 
-    function buildMsg(normalStyle = '', ...args) {
-        let res;
-        Formatting.normal = normalStyle;
-        res = args.reduce((pre, cur) => {
-            return [
-                ...pre,
-                typeof cur === 'object'? toString(cur, true): 
-                    typeof cur === 'string'? mbfs('', style('normal'), safeString(cur)): basicTypeMsg(cur)
-            ]
-        }, []).join('  ');
-        Formatting.normal = '';
+    async function buildMsg(s='white', ...args) {
+        let res = mbf('', style(s));
+
+        for (const cur of args) {
+            let msg = typeof cur === 'object'? await toString(cur, true): 
+                typeof cur === 'string'? mbf('', style(s), safeString(cur)): basicTypeMsg(cur);
+
+            res.push(msg);
+        }
+
         return res;
     }
 
@@ -28,6 +27,7 @@ export function initConsole(commander, selector) {
             res = buildMsg(style('white'), ...args);
         } catch (e) {
             error(e)
+            // console.warn(e);
         }
 
         send(res);
@@ -38,7 +38,7 @@ export function initConsole(commander, selector) {
         try {
             err = buildMsg(style('red'), ...args)
         } catch (e) {
-            send(mbfs('', style('red'), 'Fatal Error: You should have crashed your game!'));
+            send(mbf('', style('red'), 'Fatal Error: You should have crashed your game!'));
         }
 
         send(err);
@@ -116,9 +116,28 @@ export function initConsole(commander, selector) {
     }
 
 
-    return {
-        log, error, warn, trace, assert, count, countReset, 
-        updateTimer, time, timeLog, timeEnd, 
+    function updateRawTeller() {
+        rawSend.update();
     }
 
+    function update() {
+        updateTimer();
+        updateRawTeller();
+    }
+
+    return {
+        log, error, warn, trace, assert, count, countReset, 
+        time, timeLog, timeEnd, update, 
+    }
+
+}
+
+export function injectConsole(commander, selector) {
+    let console = initConsole(commander, selector);
+    const update = () => console.update();
+    delete console.update;
+
+    (window || global || globalThis).console = console;
+
+    return update;
 }

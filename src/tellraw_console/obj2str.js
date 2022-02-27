@@ -1,12 +1,13 @@
 import {objectProp, basic} from './style.js'
-import {mbfs, style} from './msgblock.js'
+import {style, mbf} from './msgblock.js'
 import {safeString, basicTypeMsg} from './type_wrapper.js'
+import { RawTeller } from './sender.js';
 
-export function toString(obj, showDetails=false, showSetterGetter=false) {
+export async function toString(obj, showDetails=false, showSetterGetter=false) {
     if (!showDetails) {
-        return getPreviewMsg(obj);
+        return await getPreviewMsg(obj);
     }
-    return getDetailsMsg(obj, showSetterGetter);
+    return await getDetailsMsg(obj, showSetterGetter);
 }
 
 function getProto(obj) {
@@ -39,81 +40,169 @@ function getObjDescriptors(obj) {
     return Object.getOwnPropertyDescriptors(obj);
 }
 
-function keyValTile(obj, k, propColor) {
+async function keyValTile(obj, k, propColor) {
     let ks;
     let vs;
 
     ks = typeof k === 'symbol'?
-        mbfs(style('italic'), objectProp.symbol, safeString(k.toString())):
-        mbfs(style('italic'), propColor, safeString(k));
+        mbf(style('italic'), objectProp.symbol, safeString(k.toString())):
+        mbf(style('italic'), propColor, safeString(k));
 
     vs = typeof obj[k] === 'object'?
-        parseObjValue(obj[k]): basicTypeMsg(obj[k]);
+        (await parseObjValue(obj[k])): basicTypeMsg(obj[k]);
 
-    return mbfs('', style('normal'), ks, ':  ', vs.replace(/\n/g, '\n  '));
+    return mbf('', style('normal'), ks, ':  ', vs, '\n');
 
 }
 
-function getDetailsMsg(obj, showSG) {
+async function getDetailsMsg(obj, showSG) {
     let propColor = objectProp.normal;
     let classPrefix = getClassPrefix(obj);
     let props = [];
 
-    let msg = mbfs('', style('normal'), `${classPrefix? classPrefix + ' ': ''}{\n`);
+    let msg = mbf('', style('normal'), `${classPrefix? classPrefix + ' ': ''}{\n`);
     props = props.concat(getObjPropNames(obj)).concat(getObjSymbols(obj));
 
-    msg += props.reduce((pre, cur) => {
-        return [...pre, keyValTile(obj, cur, propColor)];
-    }, []).join(', \n') + '\n';
+    for (const cur of props) {
+        msg.push(await keyValTile(obj, cur, propColor));
+    }
 
-    msg += '}';
+    msg.push('}');
     
     return msg;
 }
 
-function getPreviewMsg(obj) {
+async function getPreviewMsg(obj) {
     let propColor = objectProp.preview;
     let classPrefix = getClassPrefix(obj);
 
-    let msg = mbfs(style('italic'), style('normal'), `${classPrefix} {`);
-    msg += getObjPropNames(obj).reduce((pre, cur) => {
-        return [...pre, keyValTile(obj, cur, propColor)];
-    }, []).join(', ');
-    msg += '}';
+    let msg = mbf(style('italic'), style('normal'), `${classPrefix} {`);
+    let props = getObjPropNames(obj);
+    for (const cur of props) {
+        msg.push(await keyValTile(obj, cur, propColor));
+    }
+    msg.push('}');
 
     return msg;
 }
 
-function parseObjValue(obj) {
+
+async function parseObjValue(obj) {
     let classPrefix = getClassPrefix(obj);
-
     if (obj === null) {
-        return mbfs('', basic.undefined, 'null');
+        return mbf('', basic.undefined, 'null');
     }
-
+    
     if(obj instanceof Array) {
-        return parseArray(obj, classPrefix);
+        return await parseArray(obj, classPrefix);
     }
 
-    return parseValPreview(obj, classPrefix);
+    return await parseValPreview(obj, classPrefix);
 }
 
-function parseArray(obj, classPrefix) {
+async function parseArray(obj, classPrefix) {
     if (classPrefix === 'Array') classPrefix = '';
-    return mbfs(style('italic'), '', `${classPrefix} (${obj.length}) [${obj.reduce((pre, cur) => {
+    let res = mbf(style('italic'), '', `${classPrefix? classPrefix+' ': ''}(${obj.length}) [`);
+    let i = 0;
+    for (const cur of obj) {
         if (typeof cur === 'object') {
-            if (cur === null) return [...pre, mbfs('', basic.undefined, 'null')];
-            return [...pre, parseValPreview(cur, classPrefix)];
+            if (cur === null) res.push(mbf('', basic.undefined, 'null'));
+            else res.push(await parseValPreview(cur, classPrefix));
+        } else {
+            res.push(basicTypeMsg(cur));
+        }
+        if (i < obj.length - 1) {
+            res.push(', ')
+        }
+        i++;
+    }
+    res.push(']')
+    return res;
+}
+
+async function parseValPreview(obj, classPrefix) {
+
+    const keys = specClassParsers.keys();
+    for (const k of keys) {
+        if (obj instanceof k) {
+            return await getSpecParser(k).call(undefined, obj, classPrefix);
+        }
+    }
+
+    return mbf('', objectProp.preview, `${classPrefix} { ... }`);
+}
+
+/**
+ * @type {Map<Function, Function>}
+ */
+let specClassParsers = new Map();
+
+function getSpecParser(instanceClass) {
+    if (specClassParsers.has(instanceClass)) {
+        return specClassParsers.get(instanceClass);
+    }
+
+    return null;
+}
+
+/**
+ * @type {<T>(instanceClass: T extends instanceClass, handler: (obj: T, classPrefix: string) => string)}
+ */
+export function registerSpecParser(instanceClass, handler) {
+    specClassParsers.set(instanceClass, handler);
+}
+
+const getPromiseState = (() => {
+    let obj = {};
+    let promiseState = Symbol('promiseState');
+    let promiseValue = Symbol('promiseValue');
+
+    return p => {
+        let _p = Promise.race([p, obj]);
+        _p[promiseState] = 'pending';
+
+        _p.then(v => {
+            if (v === obj) _p[promiseState] = 'pending';
+            else _p[promiseState] = 'fulfilled', _p[promiseValue] = v;
+        }, reason => (_p[promiseState] = 'rejected', _p[promiseValue] = reason));
+
+        return {promiseState, promiseValue, p: _p};
+    };
+
+})()
+
+function doRegisterSpecParsers() {
+    registerSpecParser(Array, (obj, classPrefix) => {
+        return mbf(style('italic'), objectProp.preview, `${classPrefix}`, '(', basicTypeMsg(obj.length), ')');
+    });
+
+    registerSpecParser(Promise, async (obj, classPrefix) => {
+        let {promiseState, promiseValue, p} = getPromiseState(obj);
+        let state = p[promiseState];
+        let value = p[promiseValue];
+        let message;
+        
+        let msg = async () => {
+            state = p[promiseState];
+            value = p[promiseValue];
+            return mbf(style('italic'), objectProp.preview, `${classPrefix}`, ` { <${state}>${state === 'pending'? '': ': ' + (typeof value === 'object'? await parseValPreview(value, classPrefix): basicTypeMsg(value))} }`);
         }
 
-        return [...pre, basicTypeMsg(cur)];
-    }, []).join(', ')}]`);
+        try {
+            await p;
+        } catch (error) {}
+
+        message = await msg();
+
+        return message;
+    });
+
+
+    registerSpecParser(Error, obj => {
+        return mbf('', style('normal'), obj.stack);
+    })
+
+
 }
 
-function parseValPreview(obj, classPrefix) {
-    if (obj instanceof Array) {
-        return mbfs(style('italic'), objectProp.preview, `${classPrefix}`) + '(' + basicTypeMsg(obj.length) + ')';
-    }
-
-    return mbfs('', objectProp.preview, `${classPrefix} { ... }`);
-}
+doRegisterSpecParsers();

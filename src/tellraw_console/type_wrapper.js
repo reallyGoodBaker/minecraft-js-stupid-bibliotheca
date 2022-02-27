@@ -1,5 +1,5 @@
 import {basic} from './style.js'
-import {mbf, mbfs, style} from './msgblock.js'
+import {mbf, style} from './msgblock.js'
 
 export function safeString(string) {
     return string.replace(/"/g,'\\"');
@@ -14,7 +14,7 @@ export function functionMsg(data, color) {
     let str = safeString(data.toString());
     let firstBlank = str.indexOf(' ');
     if (str === '(') return str;
-    return mbfs(style('italic'), color, str.slice(0, firstBlank), mbf('', style('normal'), str.slice(firstBlank)));
+    return mbf(style('italic'), color, str.slice(0, firstBlank), mbf('', style('normal'), str.slice(firstBlank)));
 }
 
 function basicTypeParser(data, type) {
@@ -24,12 +24,12 @@ function basicTypeParser(data, type) {
     }
 
     if (type === 'undefined') {
-        return mbfs('', color, 'undefined');
+        return mbf('', color, 'undefined');
     }
 
     if (type === 'string') {
-        return mbfs('', color, safeString(`'${data.toString()}'`));
+        return mbf('', color, safeString(`'${data.toString()}'`));
     }
 
-    return mbfs('', color, data.toString());
+    return mbf('', color, data.toString());
 }
