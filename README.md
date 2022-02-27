@@ -14,7 +14,7 @@ src
 dist
 -- [packagedCode]
 packager
--- [the packager of the written code]
+-- [a tool can package mcaddon from folders]
 ```
 ## Plan
 We will use init functions to get objects to change code easily(because mojang's api often chnages,too)
