@@ -540,26 +540,26 @@ function initConsole(commander, selector) {
         updateRawTeller();
     }
 
-    return {
+    const console = {
         log, error, warn, trace, assert, count, countReset, 
-        time, timeLog, timeEnd, update, 
-    }
+        time, timeLog, timeEnd, 
+    };
+
+    return {update, console}
 
 }
 
 function injectConsole(commander, selector) {
-    let console = initConsole(commander, selector);
-    const update = () => console.update();
-    delete console.update;
+    let Module = initConsole(commander, selector);
 
     let Global = typeof window !== 'undefined'? window:
         typeof global !== 'undefined'? global:
             typeof globalThis !== 'undefined'? globalThis:
                 typeof self !== 'undefined'? self: {};
 
-    Global.console = console;
+    Global.console = Module.console;
 
-    return update;
+    return Module.update;
 }
 
 export { initConsole, injectConsole };
