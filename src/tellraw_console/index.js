@@ -137,7 +137,12 @@ export function injectConsole(commander, selector) {
     const update = () => console.update();
     delete console.update;
 
-    (window || global || globalThis).console = console;
+    let Global = typeof window !== 'undefined'? window:
+        typeof global !== 'undefined'? global:
+            typeof globalThis !== 'undefined'? globalThis:
+                typeof self !== 'undefined'? self: {};
+
+    Global.console = console;
 
     return update;
 }
