@@ -16,4 +16,10 @@ interface TellrawConsole {
     timeEnd(label?: any): void;
 }
 
-declare var initConsole: (commander: Commander, selector: string) => TellrawConsole;
+interface ConsoleModule {
+    console: TellrawConsole;
+    update(): void;
+}
+
+export var initConsole: (commander: Commander, selector: string) => ConsoleModule;
+export var injectConsole: (commander: Commander, selector: string) => () => void;
