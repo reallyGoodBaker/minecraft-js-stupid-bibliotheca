@@ -43,6 +43,10 @@ async function keyValTile(obj, k, propColor) {
     let ks;
     let vs;
 
+    if (k === '[[Prototype]]') {
+        return mbf('', objectProp.prototype, k, ':  ', getClassPrefix(obj), '\n');
+    }
+
     ks = typeof k === 'symbol'?
         mbf(style('italic'), objectProp.symbol, safeString(k.toString())):
         mbf(style('italic'), propColor, safeString(k));
@@ -65,6 +69,8 @@ async function getDetailsMsg(obj, showSG) {
     for (const cur of props) {
         msg.push(await keyValTile(obj, cur, propColor));
     }
+
+    msg.push(await keyValTile(obj, '[[Prototype]]', propColor));
 
     msg.push('}');
     
@@ -199,7 +205,7 @@ function doRegisterSpecParsers() {
 
     registerSpecParser(Error, obj => {
         return mbf('', style('normal'), obj.stack);
-    })
+    });
 
 
 }
