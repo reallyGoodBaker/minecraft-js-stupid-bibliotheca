@@ -102,7 +102,7 @@ async function parseObjValue(obj) {
 
 async function parseArray(obj, classPrefix) {
     if (classPrefix === 'Array') classPrefix = '';
-    let res = mbf(style('italic'), '', `${classPrefix? classPrefix+' ': ''}(${obj.length}) [`);
+    let res = mbf(style('italic'), '', `${classPrefix}(${obj.length}) [`);
     let i = 0;
     for (const cur of obj) {
         if (typeof cur === 'object') {
@@ -129,7 +129,7 @@ async function parseValPreview(obj, classPrefix) {
         }
     }
 
-    return mbf('', objectProp.preview, `${classPrefix} { ... }`);
+    return mbf('', objectProp.preview, `${classPrefix} { ... } `,);
 }
 
 /**

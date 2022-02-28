@@ -1,8 +1,8 @@
 import {basicTypeMsg, safeString} from './type_wrapper.js'
 import {toString} from './obj2str.js';
 import {getRawTeller} from './sender.js'
-import {Formatting} from '../format.js'
-import { style, mbf } from './msgblock.js';
+import { style, mbf, getTab } from './msgblock.js';
+import {getfstr} from './fstring.js';
 
 export function initConsole(commander, selector) {
     const rawSend = getRawTeller(commander);
@@ -10,11 +10,19 @@ export function initConsole(commander, selector) {
 
     async function buildMsg(s='white', ...args) {
         let res = mbf('', style(s));
+        let i = -1;
+
+        if (typeof args[0] === 'string') {
+            let fstr = await getfstr(...args);
+            if (fstr) return fstr;
+        }
 
         for (const cur of args) {
+            i++;
             let msg = typeof cur === 'object'? await toString(cur, true): 
                 typeof cur === 'string'? mbf('', style(s), safeString(cur)): basicTypeMsg(cur);
 
+            if (i) res.push(getTab(1));
             res.push(msg);
         }
 
@@ -24,7 +32,7 @@ export function initConsole(commander, selector) {
     function log(...args) {
         let res;
         try {
-            res = buildMsg(style('white'), ...args);
+            res = buildMsg('white', ...args);
         } catch (e) {
             error(e)
             // console.warn(e);
@@ -36,7 +44,7 @@ export function initConsole(commander, selector) {
     function error(...args) {
         let err;
         try {
-            err = buildMsg(style('red'), ...args)
+            err = buildMsg('red', ...args)
         } catch (e) {
             send(mbf('', style('red'), 'Fatal Error: You should have crashed your game!'));
         }
@@ -47,7 +55,7 @@ export function initConsole(commander, selector) {
     function warn(...args) {
         let res;
         try {
-            res = buildMsg(style('yellow'), ...args);
+            res = buildMsg('yellow', ...args);
         } catch (e) {
             error(e)
         }
@@ -63,7 +71,7 @@ export function initConsole(commander, selector) {
         let stack = getTraceStack(1);
         stack = 'trace():\n' + stack;
         
-        send(buildMsg(style('white'), stack));
+        send(buildMsg('white', stack));
     }
 
     function assert(condition, ...data) {
@@ -125,12 +133,12 @@ export function initConsole(commander, selector) {
         updateRawTeller();
     }
 
-    const console = {
+    const _console = {
         log, error, warn, trace, assert, count, countReset, 
         time, timeLog, timeEnd, 
     }
 
-    return {update, console}
+    return {update, console: _console}
 
 }
 

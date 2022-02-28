@@ -1,10 +1,13 @@
 import {Formatting} from '../format.js'
 
+const tab = new Array(2).fill(' ').join('');
+export const getTab = count => new Array(count).fill(tab).join('');
+
 export class MsgBlock extends Array {
     static defaultColor = Formatting.white;
     static defaultStyle = Formatting.normal;
 
-    toTellrawString() {
+    toTellrawString(tabCount=0) {
         let [style, color, ...msgs] = this;
 
         style = style || MsgBlock.defaultStyle;
@@ -20,11 +23,11 @@ export class MsgBlock extends Array {
             }
         }, '');
 
-        return color + style + msg + Formatting.reset;
+        return getTab(tabCount) + (color + style + msg + Formatting.reset).trim();
     }
 
-    toString() {
-        return this.toTellrawString();
+    toString(tabCount=0) {
+        return this.toTellrawString(tabCount);
     }
 
 }
