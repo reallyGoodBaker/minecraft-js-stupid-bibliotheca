@@ -1,7 +1,6 @@
 import { mbf, style } from "./msgblock.js";
 import { toString } from "./obj2str.js";
 import { basic } from './style.js';
-import { basicTypeMsg } from "./type_wrapper.js";
 
 class Format {
     /**

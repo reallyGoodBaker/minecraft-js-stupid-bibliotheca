@@ -1,5 +1,3 @@
-import {mbf, style} from './msgblock.js'
-
 function fakeNativeToString(name, ...args) {
     function toString() { return `function ${name}(${args.join(', ')}) { [native code] }`}
     return toString;
@@ -48,33 +46,6 @@ export class RawTeller {
     }
 
 }
-
-// const untrustedHeader = mbf('', style('red'), '[Untrusted] ');
-
-// export class UntrustedRawTeller extends RawTeller {
-
-//     constructor(header) {
-//         super(header);
-
-//         this.send = this.sendUntrusted;
-//     }
-
-//     sendUntrusted(msg, selector='@a[tag=debugger]') {
-//         try {
-//             this.sender.runCommand(`tellraw ${selector} {"rawtext": [{"text": "${untrustedHeader + msg}"}]}`);
-//         } catch (error) {
-//             this.onError.call(undefined, e, msg, selector);
-//         }
-//     }
-
-//     setSender(s) {
-//         this.sender = s;
-//     }
-
-//     onError(e) {
-//     }
-
-// }
 
 /**
  * @param {any} commander 

@@ -1,7 +1,6 @@
 import {objectProp, basic} from './style.js'
 import {style, mbf} from './msgblock.js'
 import {safeString, basicTypeMsg} from './type_wrapper.js'
-import { RawTeller } from './sender.js';
 
 export async function toString(obj, showDetails=false, showSetterGetter=false) {
     if (!showDetails) {

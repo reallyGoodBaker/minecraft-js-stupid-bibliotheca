@@ -22,7 +22,7 @@ export function initConsole(commander, selector) {
             let msg = typeof cur === 'object'? await toString(cur, true): 
                 typeof cur === 'string'? mbf('', style(s), safeString(cur)): basicTypeMsg(cur);
 
-            if (i) res.push(getTab(1));
+            if (i) res.push(getTab());
             res.push(msg);
         }
 
