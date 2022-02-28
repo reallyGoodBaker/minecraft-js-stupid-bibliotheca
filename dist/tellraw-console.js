@@ -23,11 +23,14 @@ const Formatting = {
     normal: ''
 };
 
+const tab = new Array(2).fill(' ').join('');
+const getTab = count => new Array(count).fill(tab).join('');
+
 class MsgBlock extends Array {
     static defaultColor = Formatting.white;
     static defaultStyle = Formatting.normal;
 
-    toTellrawString() {
+    toTellrawString(tabCount=0) {
         let [style, color, ...msgs] = this;
 
         style = style || MsgBlock.defaultStyle;
@@ -43,11 +46,11 @@ class MsgBlock extends Array {
             }
         }, '');
 
-        return color + style + msg + Formatting.reset;
+        return getTab(tabCount) + (color + style + msg + Formatting.reset).trim();
     }
 
-    toString() {
-        return this.toTellrawString();
+    toString(tabCount=0) {
+        return this.toTellrawString(tabCount);
     }
 
 }
@@ -314,7 +317,7 @@ async function parseObjValue(obj) {
 
 async function parseArray(obj, classPrefix) {
     if (classPrefix === 'Array') classPrefix = '';
-    let res = mbf(style('italic'), '', `${classPrefix? classPrefix+' ': ''}(${obj.length}) [`);
+    let res = mbf(style('italic'), '', `${classPrefix}(${obj.length}) [`);
     let i = 0;
     for (const cur of obj) {
         if (typeof cur === 'object') {
@@ -341,7 +344,7 @@ async function parseValPreview(obj, classPrefix) {
         }
     }
 
-    return mbf('', objectProp.preview, `${classPrefix} { ... }`);
+    return mbf('', objectProp.preview, `${classPrefix} { ... } `,);
 }
 
 /**
@@ -419,17 +422,107 @@ function doRegisterSpecParsers() {
 
 doRegisterSpecParsers();
 
+class Format {
+    /**
+     * @type {Format[]}
+     */
+    static formats = [];
+
+    constructor(opt) {
+        this.checker = opt.checker;
+        this.parse = opt.parse;
+
+        Format.formats.push(this);
+    }
+
+}
+
+function check(str) {
+    let i = 0;
+    for (const format of Format.formats) {
+        if (format.checker.test(str)) {
+            return i;
+        }
+        i++;
+    }
+    return false;
+}
+
+/**
+ * @param {{checker: RegExp, parse: (value: any) => any}} opt 
+ */
+function addFormat(opt) {
+    return new Format(opt);
+}
+
+async function parseFormat(str, value, format) {
+    const res = format.checker.exec(str);
+    const args = [...res];
+    const returnVal = await format.parse(value, ...args);
+
+    return str.replace(format.checker, returnVal);
+}
+
+async function getfstr(formatStr, ...args) {
+    let _args = [...args];
+    let index;
+    let returnVal;
+
+    while (typeof (index = check(await returnVal || formatStr)) === 'number') {
+        let value = _args.shift();
+        let format = Format.formats[index];
+
+        returnVal = await parseFormat(returnVal || formatStr, value, format);
+    }
+
+    return returnVal;
+}
+
+
+addFormat({
+    checker: /%d/,
+    parse(value) {
+        return mbf('', basic.number, new Number(value).toFixed(0));
+    }
+});
+
+addFormat({
+    checker: /%[o|O]/,
+    async parse(v) {
+        return mbf(style('italic'), style('normal'), await toString(v, true));
+    }
+});
+
+addFormat({
+    checker: /%(.*?)f/,
+    parse(v, $, $1) {
+        if ($1.startsWith('.')) {
+            $1 = $1.slice(1);
+            return mbf('', basic.number, new Number(v).toFixed(+$1));
+        }
+        return mbf('', basic.number, new Number(v));
+    }
+});
+
 function initConsole(commander, selector) {
     const rawSend = getRawTeller(commander);
     const send = async msg => rawSend(await msg, selector);
 
     async function buildMsg(s='white', ...args) {
         let res = mbf('', style(s));
+        let i = -1;
+
+        if (typeof args[0] === 'string') {
+            let fstr = await getfstr(...args);
+            if (fstr) return fstr;
+        }
 
         for (const cur of args) {
+            i++;
             let msg = typeof cur === 'object'? await toString(cur, true): 
                 typeof cur === 'string'? mbf('', style(s), safeString(cur)): basicTypeMsg(cur);
 
+            if (i) res.push(getTab(1));
             res.push(msg);
         }
 
@@ -439,7 +532,7 @@ function initConsole(commander, selector) {
     function log(...args) {
         let res;
         try {
-            res = buildMsg(style('white'), ...args);
+            res = buildMsg('white', ...args);
         } catch (e) {
             error(e);
             // console.warn(e);
@@ -451,7 +544,7 @@ function initConsole(commander, selector) {
     function error(...args) {
         let err;
         try {
-            err = buildMsg(style('red'), ...args);
+            err = buildMsg('red', ...args);
         } catch (e) {
             send(mbf('', style('red'), 'Fatal Error: You should have crashed your game!'));
         }
@@ -462,7 +555,7 @@ function initConsole(commander, selector) {
     function warn(...args) {
         let res;
         try {
-            res = buildMsg(style('yellow'), ...args);
+            res = buildMsg('yellow', ...args);
         } catch (e) {
             error(e);
         }
@@ -478,7 +571,7 @@ function initConsole(commander, selector) {
         let stack = getTraceStack(1);
         stack = 'trace():\n' + stack;
         
-        send(buildMsg(style('white'), stack));
+        send(buildMsg('white', stack));
     }
 
     function assert(condition, ...data) {
@@ -540,12 +633,12 @@ function initConsole(commander, selector) {
         updateRawTeller();
     }
 
-    const console = {
+    const _console = {
         log, error, warn, trace, assert, count, countReset, 
         time, timeLog, timeEnd, 
     };
 
-    return {update, console}
+    return {update, console: _console}
 
 }
 
