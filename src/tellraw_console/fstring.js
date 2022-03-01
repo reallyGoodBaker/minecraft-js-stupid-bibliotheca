@@ -58,28 +58,31 @@ export async function getfstr(formatStr, ...args) {
     return returnVal;
 }
 
+export function initfstring() {
 
-addFormat({
-    checker: /%d/,
-    parse(value) {
-        return mbf('', basic.number, new Number(value).toFixed(0));
-    }
-});
-
-addFormat({
-    checker: /%[o|O]/,
-    async parse(v) {
-        return mbf(style('italic'), style('normal'), await toString(v, true));
-    }
-});
-
-addFormat({
-    checker: /%(.*?)f/,
-    parse(v, $, $1) {
-        if ($1.startsWith('.')) {
-            $1 = $1.slice(1);
-            return mbf('', basic.number, new Number(v).toFixed(+$1));
+    addFormat({
+        checker: /%d/,
+        parse(value) {
+            return mbf('', basic.number, new Number(value).toFixed(0));
         }
-        return mbf('', basic.number, new Number(v));
-    }
-});
+    });
+    
+    addFormat({
+        checker: /%[o|O]/,
+        async parse(v) {
+            return mbf(style('italic'), style('normal'), await toString(v, true));
+        }
+    });
+    
+    addFormat({
+        checker: /%(.*?)f/,
+        parse(v, $, $1) {
+            if ($1.startsWith('.')) {
+                $1 = $1.slice(1);
+                return mbf('', basic.number, new Number(v).toFixed(+$1));
+            }
+            return mbf('', basic.number, new Number(v));
+        }
+    });
+
+}

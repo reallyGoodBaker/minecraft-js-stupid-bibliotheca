@@ -23,7 +23,9 @@ export class MsgBlock extends Array {
             }
         }, '');
 
-        return getTab(tabCount) + (color + style + msg + Formatting.reset).trim();
+        let returnVal = getTab(tabCount) + (color + style + msg + Formatting.reset).trim();
+
+        return returnVal.replace(/(§r)+/g, ($, $1) => $1);
     }
 
     toString(tabCount=0) {

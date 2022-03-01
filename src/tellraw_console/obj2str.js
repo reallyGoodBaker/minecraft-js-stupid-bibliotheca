@@ -1,12 +1,12 @@
 import {objectProp, basic} from './style.js'
 import {style, mbf} from './msgblock.js'
-import {safeString, basicTypeMsg} from './type_wrapper.js'
+import {safeString, basicTypeMsg, getFunctionSignature} from './type_wrapper.js'
 
-export async function toString(obj, showDetails=false, showSetterGetter=false) {
+export async function toString(obj, showDetails=false) {
     if (!showDetails) {
         return await getPreviewMsg(obj);
     }
-    return await getDetailsMsg(obj, showSetterGetter);
+    return await getDetailsMsg(obj);
 }
 
 function getProto(obj) {
@@ -31,6 +31,22 @@ function getObjPropNames(obj) {
     return arr;
 }
 
+function getObjInnenumerablePropNames(obj) {
+    const descs = getObjDescriptors(obj);
+    let res = [];
+
+    for (const key in descs) {
+        if (Object.hasOwnProperty.call(descs, key)) {
+            const desc = descs[key];
+            if (!desc.enumerable) {
+                res.push(key);
+            }
+        }
+    }
+
+    return res;
+}
+
 function getObjSymbols(obj) {
     return Object.getOwnPropertySymbols(obj);
 }
@@ -44,35 +60,77 @@ async function keyValTile(obj, k, propColor) {
     let vs;
 
     if (k === '[[Prototype]]') {
-        return mbf('', objectProp.prototype, k, ':  ', getClassPrefix(obj), '\n');
+        return mbf('', objectProp.prototype, k, ':  ', getClassPrefix(obj));
     }
 
     ks = typeof k === 'symbol'?
-        mbf(style('italic'), objectProp.symbol, safeString(k.toString())):
-        mbf(style('italic'), propColor, safeString(k));
+            mbf(style('italic'), objectProp.symbol, safeString(k.toString())):
+            mbf(style('italic'), propColor, safeString(k));
 
     vs = typeof obj[k] === 'object'?
         (await parseObjValue(obj[k])): basicTypeMsg(obj[k]);
 
-    return mbf('', style('normal'), ks, ':  ', vs, '\n');
+    return mbf('', style('normal'), ks, ':  ', vs);
 
 }
 
-async function getDetailsMsg(obj, showSG) {
+async function parseExtend(obj, showInnenumerable=true) {
+    const objDesc = getObjDescriptors(obj);
+    let res = mbf();
+    for (const k in objDesc) {
+        const desc = objDesc[k];
+
+        const {set, get, enumerable} = desc;
+
+        const propName = safeString(typeof k === 'symbol'? k.toString(): k);
+        let msg = mbf('', enumerable? objectProp.setterGetter: objectProp.unenumerable);
+
+        if (typeof get === 'function') {
+            msg.push('\n');
+            msg.push(`get ${propName}: `, await parseValPreview(get));
+        }
+
+        if (typeof set === 'function') {
+            msg.push('\n');
+            msg.push(`set ${propName}: `, await parseValPreview(set));
+        }
+
+        if (enumerable !== showInnenumerable) {
+            msg.push('\n');
+            msg.push(': ', await parseValPreview(obj[k]));
+        }
+
+        res.push(...msg);
+    }
+
+    return res;
+}
+
+async function paresePrototype(obj) {
+    const list = Object.getOwnPropertyDescriptors(getProto(obj));
+    console.log(list);
+}
+
+async function getDetailsMsg(obj) {
     let propColor = objectProp.normal;
     let classPrefix = getClassPrefix(obj);
     let props = [];
 
-    let msg = mbf('', style('normal'), `${classPrefix? classPrefix + ' ': ''}{\n`);
+    let msg = mbf('', style('normal'), `${classPrefix? classPrefix + ' ': ''}:`);
     props = props.concat(getObjPropNames(obj)).concat(getObjSymbols(obj));
 
     for (const cur of props) {
-        msg.push(await keyValTile(obj, cur, propColor));
+        msg.push('\n', await keyValTile(obj, cur, propColor));
     }
 
-    msg.push(await keyValTile(obj, '[[Prototype]]', propColor));
+    let extend = await parseExtend(obj);
+    if (extend.length > 2) {
+        msg.push(extend);
+    }
 
-    msg.push('}');
+    paresePrototype(obj);
+
+    msg.push('\n', await keyValTile(obj, '[[Prototype]]', propColor));
     
     return msg;
 }
@@ -84,7 +142,7 @@ async function getPreviewMsg(obj) {
     let msg = mbf(style('italic'), style('normal'), `${classPrefix} {`);
     let props = getObjPropNames(obj);
     for (const cur of props) {
-        msg.push(await keyValTile(obj, cur, propColor));
+        msg.push('\n', await keyValTile(obj, cur, propColor));
     }
     msg.push('}');
 
@@ -150,9 +208,6 @@ function getSpecParser(instanceClass) {
     return null;
 }
 
-/**
- * @type {<T>(instanceClass: T extends instanceClass, handler: (obj: T, classPrefix: string) => string)}
- */
 export function registerSpecParser(instanceClass, handler) {
     specClassParsers.set(instanceClass, handler);
 }
@@ -176,7 +231,7 @@ const getPromiseState = (() => {
 
 })()
 
-function doRegisterSpecParsers() {
+export function doRegisterSpecParsers() {
     registerSpecParser(Array, (obj, classPrefix) => {
         return mbf(style('italic'), objectProp.preview, `${classPrefix}`, '(', basicTypeMsg(obj.length), ')');
     });
@@ -207,7 +262,10 @@ function doRegisterSpecParsers() {
         return mbf('', style('normal'), obj.stack);
     });
 
+    registerSpecParser(Function, obj => {
+        const msg = getFunctionSignature(obj, basic.function);
+        return mbf('', basic.function, msg);
+    })
+
 
 }
-
-doRegisterSpecParsers();

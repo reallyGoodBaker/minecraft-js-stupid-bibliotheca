@@ -1,10 +1,15 @@
 import {basicTypeMsg, safeString} from './type_wrapper.js'
-import {toString} from './obj2str.js';
+import {toString, doRegisterSpecParsers} from './obj2str.js';
 import {getRawTeller} from './sender.js'
 import { style, mbf, getTab } from './msgblock.js';
-import {getfstr} from './fstring.js';
+import {getfstr, initfstring} from './fstring.js';
 
 export function initConsole(commander, selector) {
+
+    doRegisterSpecParsers();
+    initfstring();
+
+
     const rawSend = getRawTeller(commander);
     const send = async msg => rawSend(await msg, selector);
 

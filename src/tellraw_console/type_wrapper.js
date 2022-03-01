@@ -17,6 +17,15 @@ export function functionMsg(data, color) {
     return mbf(style('italic'), color, str.slice(0, firstBlank), mbf('', style('normal'), str.slice(firstBlank)));
 }
 
+export function getFunctionSignature(func, color) {
+    let str = safeString(func.toString());
+    let signEnd = /\)[\s]*\{/.exec(func).index + 1;
+    let firstBlank = str.indexOf(' ');
+
+    if (str[0] === '(') return `<Anonymous>${str.slice(0, signEnd)}`;
+    return mbf(style('italic'), color, str.slice(0, firstBlank), mbf('', style('normal'), str.slice(firstBlank, signEnd)));
+}
+
 function basicTypeParser(data, type) {
     let color = basic[type];
     if (type === 'function') {
