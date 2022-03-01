@@ -140,8 +140,7 @@ async function getDetailsMsg(obj) {
         msg.push(extend);
     }
 
-    let protosExtend = await paresePrototype(obj);
-    msg.push(protosExtend);
+    msg.push(await paresePrototype(obj));
 
 
     msg.push('\n', await keyValTile(obj, '[[Prototype]]', propColor));
