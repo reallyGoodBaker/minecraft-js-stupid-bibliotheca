@@ -98,7 +98,7 @@ async function parseExtend(obj, showInnenumerable=true) {
 
         if (!enumerable && showInnenumerable) {
             msg.push('\n');
-            msg.push('', objectProp.unenumerable, k, ': ', await parseValPreview(obj[k]));
+            msg.push('', objectProp.innenumerable, k, ': ', await parseValPreview(obj[k]));
         }
 
         if(msg.length) res.push(...msg);

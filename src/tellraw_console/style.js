@@ -11,7 +11,7 @@ export const basic = {
 
 export const objectProp = {
     setterGetter: style('dark_green'),
-    unenumerable: style('green'),
+    innenumerable: style('green'),
     preview: style('gray'),
     normal: style('blue'),
     prototype: style('dark_gray'),
