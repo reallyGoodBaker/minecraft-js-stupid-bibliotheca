@@ -60,7 +60,9 @@ async function keyValTile(obj, k, propColor) {
     let vs;
 
     if (k === '[[Prototype]]') {
-        return mbf('', objectProp.prototype, k, ':  ', getClassPrefix(obj) || mbf('', basic.undefined, 'null'));
+        let prefix = getClassPrefix(obj);
+        if (!prefix) return '';
+        return mbf('', objectProp.prototype, k, ':  ',  prefix);
     }
 
     ks = typeof k === 'symbol'?
@@ -137,8 +139,8 @@ async function getDetailsMsg(obj) {
 
     msg.push(await paresePrototype(obj));
 
-
-    msg.push('\n', await keyValTile(obj, '[[Prototype]]', propColor));
+    const prototypeClassPrefix = await keyValTile(obj, '[[Prototype]]', propColor);
+    if(prototypeClassPrefix) msg.push('\n', prototypeClassPrefix);
     
     return msg;
 }
