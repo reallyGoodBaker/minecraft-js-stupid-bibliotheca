@@ -188,49 +188,43 @@ async function keyValTile(obj, k, propColor) {
 async function parseExtend(obj, showInnenumerable=true) {
     const objDesc = getObjDescriptors(obj);
     let res = mbf();
+
     for (const k in objDesc) {
         const desc = objDesc[k];
-
         const {set, get, enumerable} = desc;
-
         const propName = safeString(typeof k === 'symbol'? k.toString(): k);
-        let msg = mbf('', enumerable? objectProp.setterGetter: objectProp.unenumerable);
+        let msg = mbf();
 
         if (typeof get === 'function') {
             msg.push('\n');
-            msg.push(`get ${propName}: `, await parseValPreview(get));
+            msg.push('', enumerable? objectProp.setterGetter: objectProp.unenumerable, `get ${propName}: `, await parseValPreview(get));
         }
 
         if (typeof set === 'function') {
             msg.push('\n');
-            msg.push(`set ${propName}: `, await parseValPreview(set));
+            msg.push('', enumerable? objectProp.setterGetter: objectProp.unenumerable, `set ${propName}: `, await parseValPreview(set));
         }
 
-        if (enumerable !== showInnenumerable) {
+        if (!enumerable && showInnenumerable) {
             msg.push('\n');
-            msg.push(': ', await parseValPreview(obj[k]));
+            msg.push('', enumerable? objectProp.setterGetter: objectProp.unenumerable, ': ', await parseValPreview(obj[k]));
         }
 
-        res.push(...msg);
+        if(msg.length) res.push(...msg);
     }
 
-    return res;
+    if(res.length) return res;
+    return '';
 }
 
 async function paresePrototype(obj) {
-    let protos = [], res = mbf();
-    let __proto__;
+    let res = mbf();
+    let __proto__ = obj;
 
-    while(__proto__ = getProto(__proto__ || obj)) {
-        protos.push(__proto__);
+    while ((__proto__ = getProto(__proto__)) !== Object.prototype) {
+        res.push(await parseExtend(__proto__, false));
     }
 
-    protos.pop();
-
-    for (const proto of protos) {
-        res.push(await parseExtend(proto, false));
-    }
-    
     return res;
 }
 
