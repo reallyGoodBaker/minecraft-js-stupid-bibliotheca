@@ -6,10 +6,9 @@
 
 #### 使用
 
-1. 解压 addon-packager
-2. 在解压后的目录下执行 ` npm install `
-3. 配置 ` config.json ` <a href="#config">在下方查看</a>
-4. 使用 ` npm start ` 或 ` node pack `  进行打包 
+1. 在 packager 目录下执行 ` npm install `
+2. 配置 ` config.json ` <a href="#config">在下方查看</a>
+3. 使用 ` npm start ` 或 ` node pack `  进行打包 
 
 
 
