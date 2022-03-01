@@ -171,7 +171,7 @@ async function keyValTile(obj, k, propColor) {
     let vs;
 
     if (k === '[[Prototype]]') {
-        return mbf('', objectProp.prototype, k, ':  ', getClassPrefix(obj));
+        return mbf('', objectProp.prototype, k, ':  ', getClassPrefix(obj) || mbf('', basic.undefined, 'null'));
     }
 
     ks = typeof k === 'symbol'?
@@ -197,17 +197,17 @@ async function parseExtend(obj, showInnenumerable=true) {
 
         if (typeof get === 'function') {
             msg.push('\n');
-            msg.push('', enumerable? objectProp.setterGetter: objectProp.unenumerable, `get ${propName}: `, await parseValPreview(get));
+            msg.push('', objectProp.setterGetter, `get ${propName}: `, await parseValPreview(get));
         }
 
         if (typeof set === 'function') {
             msg.push('\n');
-            msg.push('', enumerable? objectProp.setterGetter: objectProp.unenumerable, `set ${propName}: `, await parseValPreview(set));
+            msg.push('', objectProp.setterGetter, `set ${propName}: `, await parseValPreview(set));
         }
 
         if (!enumerable && showInnenumerable) {
             msg.push('\n');
-            msg.push('', enumerable? objectProp.setterGetter: objectProp.unenumerable, ': ', await parseValPreview(obj[k]));
+            msg.push('', objectProp.unenumerable, k, ': ', await parseValPreview(obj[k]));
         }
 
         if(msg.length) res.push(...msg);
@@ -218,10 +218,11 @@ async function parseExtend(obj, showInnenumerable=true) {
 }
 
 async function paresePrototype(obj) {
+
     let res = mbf();
     let __proto__ = obj;
 
-    while ((__proto__ = getProto(__proto__)) !== Object.prototype) {
+    while ((__proto__ = getProto(__proto__)) !== Object.prototype && __proto__) {
         res.push(await parseExtend(__proto__, false));
     }
 
@@ -233,7 +234,7 @@ async function getDetailsMsg(obj) {
     let classPrefix = getClassPrefix(obj);
     let props = [];
 
-    let msg = mbf('', style('normal'), `${classPrefix? classPrefix + ' ': ''}:`);
+    let msg = mbf('\n', style('normal'), `${await parseValPreview(obj, classPrefix)}:`);
     props = props.concat(getObjPropNames(obj)).concat(getObjSymbols(obj));
 
     for (const cur of props) {
@@ -309,7 +310,12 @@ async function parseValPreview(obj, classPrefix) {
         }
     }
 
-    return mbf('', objectProp.preview, `${classPrefix} { ... } `,);
+    if (typeof obj !== 'object') {
+        return basicTypeMsg(obj);
+    }
+
+    classPrefix = classPrefix? classPrefix + ' ': '';
+    return mbf('', objectProp.preview, `${classPrefix}{ ... }`,);
 }
 
 /**
@@ -350,7 +356,7 @@ const getPromiseState = (() => {
 
 function doRegisterSpecParsers() {
     registerSpecParser(Array, (obj, classPrefix) => {
-        return mbf(style('italic'), objectProp.preview, `${classPrefix}`, '(', basicTypeMsg(obj.length), ')');
+        return mbf(style('italic'), objectProp.preview, `${classPrefix}`, '(', basicTypeMsg(obj.length), style('italic'), objectProp.preview, ')');
     });
 
     registerSpecParser(Promise, async (obj, classPrefix) => {
@@ -424,7 +430,7 @@ class RawTeller {
 
         this.msgQueue.forEach(msg => {
             const [selector, message, sender] = msg;
-            sender.runCommand(`tellraw ${selector} {"rawtext": [{"text": "${this.header} ${message}"}]}`);
+            sender.runCommand(`tellraw ${selector} {"rawtext": [{"text": "${this.header}${message}"}]}`);
         });
 
         this.msgQueue = [];

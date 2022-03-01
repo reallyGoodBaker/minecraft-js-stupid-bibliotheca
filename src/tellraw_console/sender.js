@@ -35,7 +35,7 @@ export class RawTeller {
 
         this.msgQueue.forEach(msg => {
             const [selector, message, sender] = msg;
-            sender.runCommand(`tellraw ${selector} {"rawtext": [{"text": "${this.header} ${message}"}]}`);
+            sender.runCommand(`tellraw ${selector} {"rawtext": [{"text": "${this.header}${message}"}]}`);
         });
 
         this.msgQueue = [];
