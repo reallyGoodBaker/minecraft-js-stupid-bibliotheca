@@ -218,8 +218,20 @@ async function parseExtend(obj, showInnenumerable=true) {
 }
 
 async function paresePrototype(obj) {
-    const list = Object.getOwnPropertyDescriptors(getProto(obj));
-    console.log(list);
+    let protos = [], res = mbf();
+    let __proto__;
+
+    while(__proto__ = getProto(__proto__ || obj)) {
+        protos.push(__proto__);
+    }
+
+    protos.pop();
+
+    for (const proto of protos) {
+        res.push(await parseExtend(proto, false));
+    }
+    
+    return res;
 }
 
 async function getDetailsMsg(obj) {
@@ -239,7 +251,9 @@ async function getDetailsMsg(obj) {
         msg.push(extend);
     }
 
-    paresePrototype(obj);
+    let protosExtend = await paresePrototype(obj);
+    msg.push(protosExtend);
+
 
     msg.push('\n', await keyValTile(obj, '[[Prototype]]', propColor));
     
@@ -259,7 +273,6 @@ async function getPreviewMsg(obj) {
 
     return msg;
 }
-
 
 async function parseObjValue(obj) {
     let classPrefix = getClassPrefix(obj);
