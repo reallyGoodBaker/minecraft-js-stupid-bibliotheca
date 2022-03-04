@@ -1,12 +1,18 @@
 import {objectProp, basic} from './style.js'
 import {style, mbf} from './msgblock.js'
 import {safeString, basicTypeMsg, getFunctionSignature} from './type_wrapper.js'
+import {TConsole} from './index.js'
 
 export async function toString(obj, showDetails=false) {
+    let returnVal;
     if (!showDetails) {
-        return await getPreviewMsg(obj);
+        returnVal = await getPreviewMsg(obj);
     }
-    return await getDetailsMsg(obj);
+    returnVal = await getDetailsMsg(obj);
+
+    TConsole.__emitter__.emit('--object', obj);
+
+    return returnVal;
 }
 
 function getProto(obj) {
@@ -71,6 +77,10 @@ async function keyValTile(obj, k, propColor) {
 
     vs = typeof obj[k] === 'object'?
         (await parseObjValue(obj[k])): basicTypeMsg(obj[k]);
+
+    if (typeof obj[k] === 'object' && obj[k]) {
+        TConsole.__emitter__.emit('--preview', obj[k]);
+    }
 
     return mbf('', style('normal'), ks, ':  ', vs);
 

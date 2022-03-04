@@ -1,7 +1,8 @@
 import {Formatting} from '../format.js'
+import {TConsole} from './index.js'
 
-const tab = new Array(2).fill(' ').join('');
-export const getTab = (count=1) => new Array(count).fill(tab).join('');
+const tab = () => new Array(TConsole.tabSize).fill(' ').join('');
+export const getTab = (count=1) => new Array(count).fill(tab()).join('');
 
 export class MsgBlock extends Array {
     static defaultColor = Formatting.white;
