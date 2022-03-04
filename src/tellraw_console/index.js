@@ -44,7 +44,6 @@ export function initConsole(commander, selector) {
             res = buildMsg('white', ...args);
         } catch (e) {
             error(e)
-            // console.warn(e);
         }
 
         send(res);

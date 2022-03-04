@@ -82,13 +82,11 @@ export class ConsoleTerminal {
         let arr = [];
         TConsole.__emitter__.on('--object', data => {
             this.context = new Context(data, [...arr]);
-            //this.set(data);
             if(!ConsoleTerminal.contexts.length) this.pushContext();
         })
 
         TConsole.__emitter__.on('--preview', data => {
             arr.push(data);
-            //this.add(data);
         })
 
     }
