@@ -1,5 +1,5 @@
 import {Formatting} from '../format.js'
-import {TConsole} from './index.js'
+import {TConsole} from './tconsole.js'
 
 const tab = () => new Array(TConsole.tabSize).fill(' ').join('');
 export const getTab = (count=1) => new Array(count).fill(tab()).join('');

@@ -1,7 +1,7 @@
 import {objectProp, basic} from './style.js'
 import {style, mbf} from './msgblock.js'
 import {safeString, basicTypeMsg, getFunctionSignature} from './type_wrapper.js'
-import {TConsole} from './index.js'
+import {TConsole} from './tconsole.js'
 
 export async function toString(obj, showDetails=false) {
     let returnVal;

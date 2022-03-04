@@ -1,7 +1,7 @@
 import {register} from './terminal.js'
 import { mbf, style, getTab } from "./msgblock.js";
 import { RawTeller } from "./sender.js";
-import {TConsole} from './index.js'
+import {TConsole} from './tconsole.js'
 
 const UNTRUSTED_HEADER = 'Untrusted >';
 const UNTRUSTED_HEADER_PREFIX = mbf(style('italic'), style('red'), UNTRUSTED_HEADER);

@@ -3,64 +3,8 @@ import {toString, doRegisterSpecParsers} from './obj2str.js';
 import {getRawTeller} from './sender.js'
 import { style, mbf, getTab } from './msgblock.js';
 import {getfstr, initfstring} from './fstring.js';
-import {EventEmitter} from '../events.js'
-import {exec, register} from './terminal.js'
 import {ConsoleTerminal} from './commands.js'
-
-export class TConsole {
-    static tConsole = null;
-    static __emitter__ = new EventEmitter();
-    static console = null;
-
-    static showDetail = true;
-    static tabSize = 2;
-
-    getInstance(opt) {
-        return TConsole.tConsole? TConsole.tConsole: TConsole.tConsole = new TConsole(opt);
-    }
-
-    constructor(opt) {
-        this.console = opt.console;
-        this.update = opt.update;
-        this.register = register;
-        this.exec = exec;
-    }
-
-    getConsole() {
-        return this.console;
-    }
-
-    injectConsole() {
-        let Global = typeof window !== 'undefined'? window:
-            typeof global !== 'undefined'? global:
-                typeof globalThis !== 'undefined'? globalThis:
-                    typeof self !== 'undefined'? self: {};
-    
-        Global.console = this.console
-    }
-
-    showDetail(bool=true) {
-        TConsole.showDetail = bool;
-    }
-
-    tabSize(count=2) {
-        TConsole.tabSize = count;
-    }
-
-    update() {
-        this.__update();
-    }
-
-    on(type, handler) {
-        TConsole.__emitter__.on(type, handler);
-    }
-
-    off(type, handler) {
-        TConsole.__emitter__.on(type, handler);
-    }
-
-
-}
+import {TConsole} from './tconsole.js'
 
 export function initConsole(commander, selector) {
 
@@ -206,16 +150,3 @@ export function initConsole(commander, selector) {
     return new TConsole({update, console: _console});
 
 }
-
-// export function injectConsole(commander, selector) {
-//     let Module = initConsole(commander, selector);
-
-//     let Global = typeof window !== 'undefined'? window:
-//         typeof global !== 'undefined'? global:
-//             typeof globalThis !== 'undefined'? globalThis:
-//                 typeof self !== 'undefined'? self: {};
-
-//     Global.console = Module.console;
-
-//     return Module.update;
-// }
