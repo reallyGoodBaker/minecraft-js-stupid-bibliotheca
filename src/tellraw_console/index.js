@@ -36,7 +36,7 @@ export function initConsole(commander, selector) {
         return res;
     }
 
-    new ConsoleTerminal(buildMsg);
+    new ConsoleTerminal(buildMsg, selector);
 
     function log(...args) {
         let res;

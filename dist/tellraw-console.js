@@ -276,38 +276,58 @@ let commandRegistry = {};
  * @param {any} [opt]
  */
 function register(command, handler, opt={}) {
-    let em = new EventEmitter();
+    let em = new EventEmitter({captureRejections: true});
     commandRegistry[command] = [em, opt];
     handler(em);
 }
 
-function exec(commandStr) {
-    let [commandResolver, ...args] = splitRegular(commandStr);
-    const [em, opt] = commandRegistry[commandResolver];
-    em.emit('exec', ...args);
+function unregister(command) {
+    commandRegistry[command][0].emit('unregister');
+    delete commandRegistry[command];
+}
 
-    let argCur;
-    let unspecializedArgs = [];
-
-    for (let i = 0; i < args.length;) {
-        argCur = args[i];
-        if (argCur.startsWith('-')) {
-            let resCount = opt[argCur];
-            if (resCount) {
-                let _args = args.slice(i + 1, i += resCount + 1);
-                em.emit(argCur, ..._args);
-                continue;
-            } else {
-                em.emit(argCur);
-                i++;
+function exec(commandStr, onerror=()=>null) {
+    return new Promise(resolve => {
+        let [commandResolver, ...args] = splitRegular(commandStr);
+        const [em, opt] = commandRegistry[commandResolver];
+        let shouldStopFlowing = false;
+    
+        em.on('error', onerror);
+        em.once('error', () => {
+            shouldStopFlowing = true;
+            resolve(false);
+        });
+    
+        em.emit('exec', ...args);
+        if(shouldStopFlowing) return;
+    
+        let argCur;
+        let unspecializedArgs = [];
+    
+        for (let i = 0; i < args.length;) {
+            argCur = args[i];
+            if (argCur.startsWith('-')) {
+                let resCount = opt[argCur];
+                if (resCount) {
+                    let _args = args.slice(i + 1, i += resCount + 1);
+                    em.emit(argCur, ..._args);
+                } else {
+                    em.emit(argCur);
+                    i++;
+                }
+                if(shouldStopFlowing) return;
                 continue;
             }
+    
+            i++;
+            unspecializedArgs.push(argCur);
         }
+        em.emit('default', ...unspecializedArgs);
+        if(shouldStopFlowing) return;
 
-        i++;
-        unspecializedArgs.push(argCur);
-    }
-    em.emit('default', ...unspecializedArgs);
+        resolve(true);
+        em.off('error', onerror);
+    })
 }
 
 const states = {
@@ -373,16 +393,21 @@ class TConsole {
 
     static showDetail = true;
     static tabSize = 2;
+    static defaultSelector = '@a[tag=debugger]';
+    static selector = TConsole.defaultSelector;
 
     getInstance(opt) {
         return TConsole.tConsole? TConsole.tConsole: TConsole.tConsole = new TConsole(opt);
     }
 
-    constructor(opt) {
+    constructor(opt, selector) {
         this.console = opt.console;
         this.update = opt.update;
+        this.unregister = unregister;
         this.register = register;
         this.exec = exec;
+        TConsole.tConsole = this;
+        this.selector(selector);
     }
 
     getConsole() {
@@ -407,11 +432,17 @@ class TConsole {
     }
 
     update() {
-        this.__update();
+        this.update();
+    }
+
+    selector(selector) {
+        if(!selector) return TConsole.selector;
+        TConsole.selector = selector;
     }
 
     on(type, handler) {
         TConsole.__emitter__.on(type, handler);
+        return this;
     }
 
     off(type, handler) {
@@ -826,7 +857,7 @@ class RawTeller {
         RawTeller.rawTeller = this;
     }
 
-    send(msg, selector='@a[tag=debugger]') {
+    send(msg, selector=TConsole.selector) {
         this.msgQueue.push([selector, msg, RawTeller.sender]);
     }
 
@@ -949,7 +980,7 @@ function initfstring() {
     addFormat({
         checker: /%[o|O]/,
         async parse(v) {
-            return mbf(style('italic'), style('normal'), await toString(v, true));
+            return mbf(style('italic'), style('normal'), await toString(v, TConsole.showDetail));
         }
     });
     
@@ -1107,7 +1138,7 @@ function initConsole(commander, selector) {
         return res;
     }
 
-    new ConsoleTerminal(buildMsg);
+    new ConsoleTerminal(buildMsg, selector);
 
     function log(...args) {
         let res;

@@ -1,3 +1,5 @@
+import {TConsole} from './tconsole.js'
+
 function fakeNativeToString(name, ...args) {
     function toString() { return `function ${name}(${args.join(', ')}) { [native code] }`}
     return toString;
@@ -22,7 +24,7 @@ export class RawTeller {
         RawTeller.rawTeller = this;
     }
 
-    send(msg, selector='@a[tag=debugger]') {
+    send(msg, selector=TConsole.selector) {
         this.msgQueue.push([selector, msg, RawTeller.sender]);
     }
 

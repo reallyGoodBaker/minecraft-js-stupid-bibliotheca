@@ -8,7 +8,7 @@ let commandRegistry = {};
  * @param {any} [opt]
  */
 export function register(command, handler, opt={}) {
-    let em = new EventEmitter();
+    let em = new EventEmitter({captureRejections: true});
     commandRegistry[command] = [em, opt];
     handler(em);
 }
@@ -18,33 +18,48 @@ export function unregister(command) {
     delete commandRegistry[command]
 }
 
-export function exec(commandStr) {
-    let [commandResolver, ...args] = splitRegular(commandStr);
-    const [em, opt] = commandRegistry[commandResolver];
-    em.emit('exec', ...args);
-
-    let argCur;
-    let unspecializedArgs = [];
-
-    for (let i = 0; i < args.length;) {
-        argCur = args[i];
-        if (argCur.startsWith('-')) {
-            let resCount = opt[argCur];
-            if (resCount) {
-                let _args = args.slice(i + 1, i += resCount + 1);
-                em.emit(argCur, ..._args);
-                continue;
-            } else {
-                em.emit(argCur);
-                i++;
+export function exec(commandStr, onerror=()=>null) {
+    return new Promise(resolve => {
+        let [commandResolver, ...args] = splitRegular(commandStr);
+        const [em, opt] = commandRegistry[commandResolver];
+        let shouldStopFlowing = false;
+    
+        em.on('error', onerror);
+        em.once('error', () => {
+            shouldStopFlowing = true;
+            resolve(false)
+        });
+    
+        em.emit('exec', ...args);
+        if(shouldStopFlowing) return;
+    
+        let argCur;
+        let unspecializedArgs = [];
+    
+        for (let i = 0; i < args.length;) {
+            argCur = args[i];
+            if (argCur.startsWith('-')) {
+                let resCount = opt[argCur];
+                if (resCount) {
+                    let _args = args.slice(i + 1, i += resCount + 1);
+                    em.emit(argCur, ..._args);
+                } else {
+                    em.emit(argCur);
+                    i++;
+                }
+                if(shouldStopFlowing) return;
                 continue;
             }
+    
+            i++;
+            unspecializedArgs.push(argCur);
         }
+        em.emit('default', ...unspecializedArgs);
+        if(shouldStopFlowing) return;
 
-        i++;
-        unspecializedArgs.push(argCur);
-    }
-    em.emit('default', ...unspecializedArgs);
+        resolve(true);
+        em.off('error', onerror);
+    })
 }
 
 const states = {

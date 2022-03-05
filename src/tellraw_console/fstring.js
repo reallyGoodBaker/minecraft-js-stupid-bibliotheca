@@ -1,6 +1,7 @@
 import { mbf, style } from "./msgblock.js";
 import { toString } from "./obj2str.js";
 import { basic } from './style.js';
+import { TConsole } from "./tconsole.js";
 
 class Format {
     /**
@@ -70,7 +71,7 @@ export function initfstring() {
     addFormat({
         checker: /%[o|O]/,
         async parse(v) {
-            return mbf(style('italic'), style('normal'), await toString(v, true));
+            return mbf(style('italic'), style('normal'), await toString(v, TConsole.showDetail));
         }
     });
     

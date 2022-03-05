@@ -1,5 +1,5 @@
 import {EventEmitter} from '../events.js'
-import {exec, register} from './terminal.js'
+import {exec, register, unregister} from './terminal.js'
 
 export class TConsole {
     static tConsole = null;
@@ -8,16 +8,21 @@ export class TConsole {
 
     static showDetail = true;
     static tabSize = 2;
+    static defaultSelector = '@a[tag=debugger]';
+    static selector = TConsole.defaultSelector;
 
     getInstance(opt) {
         return TConsole.tConsole? TConsole.tConsole: TConsole.tConsole = new TConsole(opt);
     }
 
-    constructor(opt) {
+    constructor(opt, selector) {
         this.console = opt.console;
         this.update = opt.update;
+        this.unregister = unregister;
         this.register = register;
         this.exec = exec;
+        TConsole.tConsole = this;
+        this.selector(selector);
     }
 
     getConsole() {
@@ -42,11 +47,17 @@ export class TConsole {
     }
 
     update() {
-        this.__update();
+        this.update();
+    }
+
+    selector(selector) {
+        if(!selector) return TConsole.selector;
+        TConsole.selector = selector;
     }
 
     on(type, handler) {
         TConsole.__emitter__.on(type, handler);
+        return this;
     }
 
     off(type, handler) {
