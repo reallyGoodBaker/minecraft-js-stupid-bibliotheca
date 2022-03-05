@@ -558,6 +558,199 @@ function basicTypeParser(data, type) {
     return mbf('', color, data.toString());
 }
 
+function fakeNativeToString(name, ...args) {
+    function toString() { return `function ${name}(${args.join(', ')}) { [native code] }`}
+    return toString;
+}
+
+class RawTeller {
+    static sender = null;
+    /**
+     * @type {[string, string, any][]}
+     */
+    msgQueue = [];
+    pending = false;
+
+    static header = '';
+    /**
+     * @type {RawTeller}
+     */
+    static rawTeller;
+    
+    constructor(header) {
+        this.header = header || RawTeller.header;
+        RawTeller.rawTeller = this;
+    }
+
+    send(msg, selector=TConsole.selector) {
+        this.msgQueue.push([selector, msg, RawTeller.sender]);
+    }
+
+    pend() {
+        this.pending = true;
+    }
+
+    active() {
+        if (this.pending) return;
+
+        this.msgQueue.forEach(msg => {
+            const [selector, message, sender] = msg;
+            sender.runCommand(`tellraw ${selector} {"rawtext": [{"text": "${this.header}${message}"}]}`);
+        });
+
+        this.msgQueue = [];
+    }
+
+    setSender(s) {
+        RawTeller.sender = s;
+    }
+
+}
+
+/**
+ * @param {any} commander 
+ * @returns {Function}
+ */
+function getRawTeller(commander) {
+
+    let sender = new RawTeller();
+    sender.setSender(commander);
+
+    function send(msg, selector) {
+        sender.send(msg, selector);
+    }
+
+    send.toString = fakeNativeToString('send', 'msg', 'selector');
+
+    send.update = () => {
+        sender.active();
+    };
+
+    let senderProxy = new Proxy(send, {
+        get(t, p) {
+            return t[p];
+        },
+
+        set() { return false }
+    });
+
+    return senderProxy;
+}
+
+const UNTRUSTED_HEADER = 'Untrusted >';
+const UNTRUSTED_HEADER_PREFIX = mbf(style('italic'), style('red'), UNTRUSTED_HEADER);
+
+function sendUntrusted(msg, selector) {
+    RawTeller.rawTeller.send(UNTRUSTED_HEADER_PREFIX + getTab() + msg, selector);
+}
+
+function send(msg, selector) {
+    RawTeller.rawTeller.send(msg, selector);
+}
+
+const ConsoleSpecified = {
+    '-o': 1,
+    '-b': 0,
+    '--open': 1,
+    '--back': 0,
+    '-p': 1
+};
+
+async function _openLogic(terminal, index, msgBuilder) {
+    let data = terminal.get(index);
+    let msg = await msgBuilder('normal', data);
+    terminal.pushContext();
+
+    send(msg);
+}
+
+async function _backLogic(terminal, msgBuilder) {
+    if(!terminal.index) return;
+
+    let data = terminal.clearContext();
+    let msg = await msgBuilder('normal', data);
+
+    send(msg);
+}
+
+class Context {
+    data = null;
+    previews = [];
+    constructor(data, previews) {
+        this.data = data;
+        this.previews = previews;
+    }
+ }
+
+class ConsoleTerminal {
+    static contexts = [];
+    static counter = -1;
+    context  = null;
+    index = 0;
+
+    constructor(msgBuilder) {
+
+        const openLogic = index => {
+            _openLogic(this, index, msgBuilder);
+        };
+
+        const backLogic = () => {
+            _backLogic(this, msgBuilder);
+        };
+
+        register('con', em => {
+            em.on('-o', openLogic);
+            em.on('--open', openLogic);
+            em.on('-b', backLogic);
+            em.on('--back', backLogic);
+            em.on('-p', async data => sendUntrusted(await msgBuilder('normal', data)));
+
+            em.on('unregister', () => {
+                em.removeAllListeners('-o');
+                em.removeAllListeners('--open');
+                em.removeAllListeners('-b');
+                em.removeAllListeners('--back');
+                em.removeAllListeners('-p');
+            });
+        }, ConsoleSpecified);
+
+        let arr = [];
+        TConsole.__emitter__.on('--object', data => {
+            ConsoleTerminal.counter = -1;
+            this.context = new Context(data, [...arr]);
+            if(!ConsoleTerminal.contexts.length) this.pushContext();
+        });
+
+        TConsole.__emitter__.on('--preview', data => {
+            ConsoleTerminal.counter++;
+            arr.push(data);
+        });
+
+    }
+
+    clearContext() {
+        ConsoleTerminal.contexts.length = this.index;
+        this.index--;
+        this.updateContext();
+        return this.context.data;
+    }
+
+    pushContext() {
+        this.index = ConsoleTerminal.contexts.length;
+        ConsoleTerminal.contexts.push(this.context);
+        this.updateContext();
+    }
+
+    updateContext() {
+        this.context = ConsoleTerminal.contexts[this.index];
+    }
+
+    get(index=0) {
+        return this.context.previews[index];
+    }
+
+}
+
 async function toString(obj, showDetails=false) {
     let returnVal;
     if (!showDetails) {
@@ -619,6 +812,7 @@ async function keyValTile(obj, k, propColor) {
 
     if (typeof obj[k] === 'object' && obj[k]) {
         TConsole.__emitter__.emit('--preview', obj[k]);
+        vs.push(getTab() + `$${ConsoleTerminal.counter}`);
     }
 
     return mbf('', style('normal'), ks, ':  ', vs);
@@ -833,85 +1027,6 @@ function doRegisterSpecParsers() {
 
 }
 
-function fakeNativeToString(name, ...args) {
-    function toString() { return `function ${name}(${args.join(', ')}) { [native code] }`}
-    return toString;
-}
-
-class RawTeller {
-    static sender = null;
-    /**
-     * @type {[string, string, any][]}
-     */
-    msgQueue = [];
-    pending = false;
-
-    static header = '';
-    /**
-     * @type {RawTeller}
-     */
-    static rawTeller;
-    
-    constructor(header) {
-        this.header = header || RawTeller.header;
-        RawTeller.rawTeller = this;
-    }
-
-    send(msg, selector=TConsole.selector) {
-        this.msgQueue.push([selector, msg, RawTeller.sender]);
-    }
-
-    pend() {
-        this.pending = true;
-    }
-
-    active() {
-        if (this.pending) return;
-
-        this.msgQueue.forEach(msg => {
-            const [selector, message, sender] = msg;
-            sender.runCommand(`tellraw ${selector} {"rawtext": [{"text": "${this.header}${message}"}]}`);
-        });
-
-        this.msgQueue = [];
-    }
-
-    setSender(s) {
-        RawTeller.sender = s;
-    }
-
-}
-
-/**
- * @param {any} commander 
- * @returns {Function}
- */
-function getRawTeller(commander) {
-
-    let sender = new RawTeller();
-    sender.setSender(commander);
-
-    function send(msg, selector) {
-        sender.send(msg, selector);
-    }
-
-    send.toString = fakeNativeToString('send', 'msg', 'selector');
-
-    send.update = () => {
-        sender.active();
-    };
-
-    let senderProxy = new Proxy(send, {
-        get(t, p) {
-            return t[p];
-        },
-
-        set() { return false }
-    });
-
-    return senderProxy;
-}
-
 class Format {
     /**
      * @type {Format[]}
@@ -994,117 +1109,6 @@ function initfstring() {
             return mbf('', basic.number, new Number(v));
         }
     });
-
-}
-
-const UNTRUSTED_HEADER = 'Untrusted >';
-const UNTRUSTED_HEADER_PREFIX = mbf(style('italic'), style('red'), UNTRUSTED_HEADER);
-
-function sendUntrusted(msg, selector) {
-    RawTeller.rawTeller.send(UNTRUSTED_HEADER_PREFIX + getTab() + msg, selector);
-}
-
-function send(msg, selector) {
-    RawTeller.rawTeller.send(msg, selector);
-}
-
-const ConsoleSpecified = {
-    '-o': 1,
-    '-b': 0,
-    '--open': 1,
-    '--back': 0,
-    '-p': 1
-};
-
-async function _openLogic(terminal, index, msgBuilder) {
-    let data = terminal.get(index);
-    let msg = await msgBuilder('normal', data);
-    terminal.pushContext();
-
-    send(msg);
-}
-
-async function _backLogic(terminal, msgBuilder) {
-    if(!terminal.index) return;
-
-    let data = terminal.clearContext();
-    let msg = await msgBuilder('normal', data);
-
-    send(msg);
-}
-
-class Context {
-    data = null;
-    previews = [];
-    constructor(data, previews) {
-        this.data = data;
-        this.previews = previews;
-    }
- }
-
-class ConsoleTerminal {
-    static contexts = [];
-    context  = null;
-    index = 0;
-
-    constructor(msgBuilder) {
-
-        const openLogic = index => {
-            _openLogic(this, index, msgBuilder);
-        };
-
-        const backLogic = () => {
-            _backLogic(this, msgBuilder);
-        };
-
-        register('con', em => {
-            em.on('-o', openLogic);
-            em.on('--open', openLogic);
-            em.on('-b', backLogic);
-            em.on('--back', backLogic);
-            em.on('-p', async data => sendUntrusted(await msgBuilder('normal', data)));
-
-            em.on('unregister', () => {
-                em.removeAllListeners('-o');
-                em.removeAllListeners('--open');
-                em.removeAllListeners('-b');
-                em.removeAllListeners('--back');
-                em.removeAllListeners('-p');
-            });
-        }, ConsoleSpecified);
-
-        let arr = [];
-        TConsole.__emitter__.on('--object', data => {
-            this.context = new Context(data, [...arr]);
-            if(!ConsoleTerminal.contexts.length) this.pushContext();
-        });
-
-        TConsole.__emitter__.on('--preview', data => {
-            arr.push(data);
-        });
-
-    }
-
-    clearContext() {
-        ConsoleTerminal.contexts.length = this.index;
-        this.index--;
-        this.updateContext();
-        return this.context.data;
-    }
-
-    pushContext() {
-        this.index = ConsoleTerminal.contexts.length;
-        ConsoleTerminal.contexts.push(this.context);
-        this.updateContext();
-    }
-
-    updateContext() {
-        this.context = ConsoleTerminal.contexts[this.index];
-    }
-
-    get(index=0) {
-        return this.context.previews[index];
-    }
 
 }
 
