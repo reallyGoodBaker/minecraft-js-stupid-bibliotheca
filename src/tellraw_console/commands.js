@@ -50,6 +50,7 @@ class Context {
 
 export class ConsoleTerminal {
     static contexts = [];
+    static counter = -1;
     context  = null;
     index = 0;
 
@@ -81,11 +82,13 @@ export class ConsoleTerminal {
 
         let arr = [];
         TConsole.__emitter__.on('--object', data => {
+            ConsoleTerminal.counter = -1;
             this.context = new Context(data, [...arr]);
             if(!ConsoleTerminal.contexts.length) this.pushContext();
         })
 
         TConsole.__emitter__.on('--preview', data => {
+            ConsoleTerminal.counter++;
             arr.push(data);
         })
 

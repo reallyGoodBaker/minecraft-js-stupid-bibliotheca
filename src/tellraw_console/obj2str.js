@@ -1,7 +1,8 @@
 import {objectProp, basic} from './style.js'
-import {style, mbf} from './msgblock.js'
+import {style, mbf, getTab} from './msgblock.js'
 import {safeString, basicTypeMsg, getFunctionSignature} from './type_wrapper.js'
 import {TConsole} from './tconsole.js'
+import {ConsoleTerminal} from './commands.js'
 
 export async function toString(obj, showDetails=false) {
     let returnVal;
@@ -80,6 +81,7 @@ async function keyValTile(obj, k, propColor) {
 
     if (typeof obj[k] === 'object' && obj[k]) {
         TConsole.__emitter__.emit('--preview', obj[k]);
+        vs.push(getTab() + `$${ConsoleTerminal.counter}`);
     }
 
     return mbf('', style('normal'), ks, ':  ', vs);
