@@ -1,35 +1,49 @@
 import {Player} from 'mojang-minecraft'
 
-declare class FormResponse {
+interface FormResponse {
     /**
      * If true, the form was canceled by the player (e.g., they selected the pop-up X close button).
      */
     readonly isCanceled: boolean;
 }
+declare var FormResponse: {
+    prototype: FormResponse;
+    new(): FormResponse;
+}
 
-declare class ActionFormResponse extends FormResponse {
+interface ActionFormResponse extends FormResponse {
     /**
      * Returns the index of the button that was pushed.
      */
     readonly selection: number;
 }
+declare var ActionFormResponse: {
+    prototype: ActionFormResponse;
+    new(): ActionFormResponse;
+}
 
-declare class MessageFormResponse extends ActionFormResponse {}
+interface MessageFormResponse extends ActionFormResponse {}
+declare var MessageFormResponse: {
+    prototype: MessageFormResponse;
+    new(): MessageFormResponse;
+}
 
-declare class ModalFormResponse  extends FormResponse {
+interface ModalFormResponse  extends FormResponse {
     /**
      * An ordered set of values based on the order of controls specified by ModalFormData.
      */
     readonly formValues: any[];
 }
-
-class DataResponseMap {
-    Action: ActionFormResponse;
-    Message: MessageFormResponse;
-    Modal: ModalFormResponse;
+declare var ModalFormResponse: {
+    prototype: ModalFormResponse;
+    new(): ModalFormResponse;
 }
 
-class BaseFormData<T extends keyof DataResponseMap> {
+type DataResponseMap<T>  =  T extends ActionFormData? ActionFormResponse:
+    T extends MessageFormData? MessageFormResponse:
+        T extends ModalFormData? ModalFormResponse: never;
+
+interface BaseFormData {
 
     /**
      * This builder method sets the title for the modal dialog.
@@ -39,17 +53,12 @@ class BaseFormData<T extends keyof DataResponseMap> {
     /**
      * Creates and shows this modal popup form. Returns asynchronously when the player confirms or cancels the dialog.
      */
-    show(player: Player): Promise<DataResponseMap[T]>
-
-    /**
-     * Creates a new modal form builder.
-     */
-    new(): this;
+    show<T>(this: T, player: Player): Promise<DataResponseMap<T>>
     
 }
 
 
-declare class ActionFormData extends BaseFormData<'Action'> {
+interface ActionFormData extends BaseFormData {
 
     /**
      * Method that sets the body text for the modal form.
@@ -62,8 +71,12 @@ declare class ActionFormData extends BaseFormData<'Action'> {
     button(text: string, iconPath?: string): ActionFormData
 
 }
+declare var ActionFormData: {
+    prototype: ActionFormData;
+    new(): ActionFormData;
+}
 
-declare class MessageFormData extends BaseFormData<'Message'> {
+interface MessageFormData extends BaseFormData {
 
     /**
      * Method that sets the body text for the modal form.
@@ -81,9 +94,13 @@ declare class MessageFormData extends BaseFormData<'Message'> {
     button1(text: string): MessageFormData;
 
 }
+declare var MessageFormData: {
+    prototype: MessageFormData;
+    new(): MessageFormData;
+}
 
 
-declare class ModalFormData extends BaseFormData<'Modal'> {
+interface ModalFormData extends BaseFormData {
 
     /**
      * Adds a dropdown with choices to the form.
@@ -93,21 +110,25 @@ declare class ModalFormData extends BaseFormData<'Modal'> {
     /**
      * Adds an icon to the form using a graphic resource from a resource pack.
      */
-     icon(iconPath: string): ModalFormData;
+    icon(iconPath: string): ModalFormData;
 
-     /**
-      * Adds a numeric slider to the form.
-      */
-      slider(label: string, minimumValue: number, maximumValue: number, valueStep: number, defaultValue?: number): ModalFormData;
+    /**
+     * Adds a numeric slider to the form.
+     */
+    slider(label: string, minimumValue: number, maximumValue: number, valueStep: number, defaultValue?: number): ModalFormData;
 
-      /**
-       * Adds a textbox to the form.
-       */
-       textField(label: string, placeholderText: string, defaultValue?: string): ModalFormData;
+    /**
+     * Adds a textbox to the form.
+     */
+    textField(label: string, placeholderText: string, defaultValue?: string): ModalFormData;
 
-       /**
-        * Adds a toggle checkbox button to the form.
-        */
-        toggle(label: string, defaultValue?: boolean): ModalFormData;
+    /**
+    * Adds a toggle checkbox button to the form.
+    */
+    toggle(label: string, defaultValue?: boolean): ModalFormData;
         
+}
+declare var ModalFormData: {
+    prototype: ModalFormData;
+    new(): ModalFormData;
 }
