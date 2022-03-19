@@ -39,7 +39,7 @@ declare var ModalFormResponse: {
     new(): ModalFormResponse;
 }
 
-type DataResponseMap<T>  =  T extends ActionFormData? ActionFormResponse:
+type DataResponseType<T>  =  T extends ActionFormData? ActionFormResponse:
     T extends MessageFormData? MessageFormResponse:
         T extends ModalFormData? ModalFormResponse: never;
 
@@ -53,7 +53,7 @@ interface BaseFormData {
     /**
      * Creates and shows this modal popup form. Returns asynchronously when the player confirms or cancels the dialog.
      */
-    show<T>(this: T, player: Player): Promise<DataResponseMap<T>>
+    show<T>(this: T, player: Player): Promise<DataResponseType<T>>
     
 }
 
