@@ -6,7 +6,7 @@ interface FormResponse {
      */
     readonly isCanceled: boolean;
 }
-declare var FormResponse: {
+export var FormResponse: {
     prototype: FormResponse;
     new(): FormResponse;
 }
@@ -17,13 +17,13 @@ interface ActionFormResponse extends FormResponse {
      */
     readonly selection: number;
 }
-declare var ActionFormResponse: {
+export var ActionFormResponse: {
     prototype: ActionFormResponse;
     new(): ActionFormResponse;
 }
 
 interface MessageFormResponse extends ActionFormResponse {}
-declare var MessageFormResponse: {
+export var MessageFormResponse: {
     prototype: MessageFormResponse;
     new(): MessageFormResponse;
 }
@@ -34,7 +34,7 @@ interface ModalFormResponse  extends FormResponse {
      */
     readonly formValues: any[];
 }
-declare var ModalFormResponse: {
+export var ModalFormResponse: {
     prototype: ModalFormResponse;
     new(): ModalFormResponse;
 }
@@ -71,7 +71,7 @@ interface ActionFormData extends BaseFormData {
     button(text: string, iconPath?: string): ActionFormData
 
 }
-declare var ActionFormData: {
+export var ActionFormData: {
     prototype: ActionFormData;
     new(): ActionFormData;
 }
@@ -94,7 +94,7 @@ interface MessageFormData extends BaseFormData {
     button1(text: string): MessageFormData;
 
 }
-declare var MessageFormData: {
+export var MessageFormData: {
     prototype: MessageFormData;
     new(): MessageFormData;
 }
@@ -128,7 +128,7 @@ interface ModalFormData extends BaseFormData {
     toggle(label: string, defaultValue?: boolean): ModalFormData;
         
 }
-declare var ModalFormData: {
+export var ModalFormData: {
     prototype: ModalFormData;
     new(): ModalFormData;
 }
