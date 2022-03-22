@@ -91,7 +91,7 @@ interface MessageFormData extends BaseFormData {
     /**
      * This method sets the text for the second button on the dialog.
      */
-    button1(text: string): MessageFormData;
+    button2(text: string): MessageFormData;
 
 }
 export var MessageFormData: {
