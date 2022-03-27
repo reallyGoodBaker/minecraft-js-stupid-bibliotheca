@@ -1,5 +1,5 @@
 # minecraft-js-stupid-bibliotheca
-This is a library wrapper of [the interfaces related to gametest](https://docs.microsoft.com/minecraft/creator/scriptapi/mojang-minecraft)
+This is a library wrapper of [the interfaces related to gametest](https://docs.microsoft.com/minecraft/creator/scriptapi/mojang-minecraft/mojang-minecraft)
 
 # What we want to do
 We want to make the interfaces are not as terrible as the mojang api
@@ -10,11 +10,11 @@ mjsb forever
 ## File dirs
 ```
 src
--- [writtenCode]
+-- [Code is here]
 dist
--- [packagedCode]
+-- [Packaged code is here]
 packager
--- [a tool can package mcaddon from folders]
+-- [a tool can package code from folders]
 ```
 ## Plan
 We will use init functions to get objects to change code easily(because mojang's api often chnages,too)
