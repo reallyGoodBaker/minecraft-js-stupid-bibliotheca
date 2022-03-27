@@ -1,5 +1,5 @@
 import {Dimension, Entity} from 'mojang-minecraft'
-import { EventEmitter } from '../src/events';
+import { EventEmitter } from 'events';
 
 declare type Commander = Dimension | Entity;
 
