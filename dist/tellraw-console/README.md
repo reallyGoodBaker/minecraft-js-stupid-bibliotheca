@@ -10,7 +10,7 @@
 import {initConsole} from './tellraw-console'
 import {world} from 'mojang-minecraft'
 
-const tConsole = initConsole(world.getDimension('overworld'));
+const tConsole = initConsole(msg => world.getDimension('overworld').runCommand(msg));
 tConsole.injectConsole(); //将 console 注入全局环境
 
 world.events.tick.subscribe(() => tConsole.update()); //每 tick 更新一次 console 的状态。由于 console 的推送基于消息队列，此函数是消息队列的执行函数, 所以不执行这个函数就不会看到任何东西

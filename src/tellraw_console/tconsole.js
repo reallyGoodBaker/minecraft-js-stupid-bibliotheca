@@ -12,7 +12,7 @@ export class TConsole {
     static selector = TConsole.defaultSelector;
 
     getInstance(opt) {
-        return TConsole.tConsole? TConsole.tConsole: TConsole.tConsole = new TConsole(opt);
+        return TConsole.tConsole? TConsole.tConsole: new TConsole(opt);
     }
 
     constructor(opt, selector) {
@@ -46,9 +46,7 @@ export class TConsole {
         TConsole.tabSize = count;
     }
 
-    update() {
-        this.update();
-    }
+    update() {}
 
     selector(selector) {
         if(!selector) return TConsole.selector;

@@ -8,7 +8,7 @@ function fakeNativeToString(name, ...args) {
 export class RawTeller {
     static sender = null;
     /**
-     * @type {[string, string, any][]}
+     * @type {[string, string][]}
      */
     msgQueue = [];
     pending = false;
@@ -25,7 +25,7 @@ export class RawTeller {
     }
 
     send(msg, selector=TConsole.selector) {
-        this.msgQueue.push([selector, msg, RawTeller.sender]);
+        this.msgQueue.push([selector, msg]);
     }
 
     pend() {
@@ -36,15 +36,15 @@ export class RawTeller {
         if (this.pending) return;
 
         this.msgQueue.forEach(msg => {
-            const [selector, message, sender] = msg;
-            sender.runCommand(`tellraw ${selector} {"rawtext": [{"text": "${this.header}${message}"}]}`);
+            const [selector, message] = msg;
+            RawTeller.sender(`tellraw ${selector} {"rawtext": [{"text": "${this.header}${message}"}]}`);
         });
 
         this.msgQueue = [];
     }
 
-    setSender(s) {
-        RawTeller.sender = s;
+    setSender(func) {
+        RawTeller.sender = func;
     }
 
 }
