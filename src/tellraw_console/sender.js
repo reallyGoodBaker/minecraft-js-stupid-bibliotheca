@@ -1,7 +1,5 @@
-import {TConsole} from './tconsole.js'
-
 function fakeNativeToString(name, ...args) {
-    function toString() { return `function ${name}(${args.join(', ')}) { [native code] }`}
+    function toString() { return `function ${name}(${args.join(', ')}) { [native code] }` }
     return toString;
 }
 
@@ -18,14 +16,14 @@ export class RawTeller {
      * @type {RawTeller}
      */
     static rawTeller;
-    
+
     constructor(header) {
         this.header = header || RawTeller.header;
         RawTeller.rawTeller = this;
     }
 
-    send(msg, selector=TConsole.selector) {
-        this.msgQueue.push([selector, msg]);
+    send(msg) {
+        this.msgQueue.push(msg);
     }
 
     pend() {
@@ -36,8 +34,7 @@ export class RawTeller {
         if (this.pending) return;
 
         this.msgQueue.forEach(msg => {
-            const [selector, message] = msg;
-            RawTeller.sender(`tellraw ${selector} {"rawtext": [{"text": "${this.header}${message}"}]}`);
+            RawTeller.sender(`${this.header}${msg}`);
         });
 
         this.msgQueue = [];
@@ -58,11 +55,11 @@ export function getRawTeller(commander) {
     let sender = new RawTeller();
     sender.setSender(commander);
 
-    function send(msg, selector) {
-        sender.send(msg, selector);
+    function send(msg) {
+        sender.send(msg);
     }
 
-    send.toString = fakeNativeToString('send', 'msg', 'selector');
+    send.toString = fakeNativeToString('send', 'msg');
 
     send.update = () => {
         sender.active();

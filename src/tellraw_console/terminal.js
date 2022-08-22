@@ -1,4 +1,4 @@
-import {EventEmitter} from '../events.js'
+import { EventEmitter } from '../events.js'
 
 let commandRegistry = {};
 
@@ -7,8 +7,8 @@ let commandRegistry = {};
  * @param {(em: EventEmitter)=>void} handler 
  * @param {any} [opt]
  */
-export function register(command, handler, opt={}) {
-    let em = new EventEmitter({captureRejections: true});
+export function register(command, handler, opt = {}) {
+    let em = new EventEmitter({ captureRejections: true });
     commandRegistry[command] = [em, opt];
     handler(em);
 }
@@ -18,24 +18,24 @@ export function unregister(command) {
     delete commandRegistry[command]
 }
 
-export function exec(commandStr, onerror=()=>null) {
+export function exec(commandStr, onerror = () => null) {
     return new Promise(resolve => {
         let [commandResolver, ...args] = splitRegular(commandStr);
         const [em, opt] = commandRegistry[commandResolver];
         let shouldStopFlowing = false;
-    
+
         em.on('error', onerror);
         em.once('error', () => {
             shouldStopFlowing = true;
             resolve(false)
         });
-    
+
         em.emit('exec', ...args);
-        if(shouldStopFlowing) return;
-    
+        if (shouldStopFlowing) return;
+
         let argCur;
         let unspecializedArgs = [];
-    
+
         for (let i = 0; i < args.length;) {
             argCur = args[i];
             if (argCur.startsWith('-')) {
@@ -47,15 +47,15 @@ export function exec(commandStr, onerror=()=>null) {
                     em.emit(argCur);
                     i++;
                 }
-                if(shouldStopFlowing) return;
+                if (shouldStopFlowing) return;
                 continue;
             }
-    
+
             i++;
             unspecializedArgs.push(argCur);
         }
         em.emit('default', ...unspecializedArgs);
-        if(shouldStopFlowing) return;
+        if (shouldStopFlowing) return;
 
         resolve(true);
         em.off('error', onerror);
@@ -109,7 +109,7 @@ function splitRegular(str) {
             }
         }
 
-        if (i === len-1) {
+        if (i === len - 1) {
             res.push(data);
             data = '';
         }

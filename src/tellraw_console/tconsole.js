@@ -1,5 +1,6 @@
-import {EventEmitter} from '../events.js'
-import {exec, register, unregister} from './terminal.js'
+import { EventEmitter } from '../events.js'
+import { exec, register, unregister } from './terminal.js'
+import { setFormatting } from '../format'
 
 export class TConsole {
     static tConsole = null;
@@ -8,21 +9,16 @@ export class TConsole {
 
     static showDetail = true;
     static tabSize = 2;
-    static defaultSelector = '@a[tag=debugger]';
-    static selector = TConsole.defaultSelector;
 
-    getInstance(opt) {
-        return TConsole.tConsole? TConsole.tConsole: new TConsole(opt);
-    }
-
-    constructor(opt, selector) {
+    constructor(opt) {
         this.console = opt.console;
         this.update = opt.update;
         this.unregister = unregister;
         this.register = register;
         this.exec = exec;
-        TConsole.tConsole = this;
-        this.selector(selector);
+        (function () {
+            TConsole.tConsole = this;
+        })()
     }
 
     getConsole() {
@@ -30,28 +26,30 @@ export class TConsole {
     }
 
     injectConsole() {
-        let Global = typeof window !== 'undefined'? window:
-            typeof global !== 'undefined'? global:
-                typeof globalThis !== 'undefined'? globalThis:
-                    typeof self !== 'undefined'? self: {};
-    
+        let Global = typeof window !== 'undefined' ? window :
+            typeof global !== 'undefined' ? global :
+                typeof globalThis !== 'undefined' ? globalThis :
+                    typeof self !== 'undefined' ? self : {};
+
         Global.console = this.console
     }
 
-    showDetail(bool=true) {
+    showDetail(bool = true) {
         TConsole.showDetail = bool;
     }
 
-    tabSize(count=2) {
+    tabSize(count = 2) {
         TConsole.tabSize = count;
     }
 
-    update() {}
-
-    selector(selector) {
-        if(!selector) return TConsole.selector;
-        TConsole.selector = selector;
+    /**
+     * @param {'minecraft'|'ansiEscapeSeq'} type 
+     */
+    setFormatting(type) {
+        setFormatting(type)
     }
+
+    update() { }
 
     on(type, handler) {
         TConsole.__emitter__.on(type, handler);

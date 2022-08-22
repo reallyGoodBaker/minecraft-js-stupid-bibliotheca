@@ -1,19 +1,30 @@
-import {style} from './msgblock.js'
+import { style } from '../format.js'
 
-export const basic = {
-    undefined: style('dark_blue'),
-    boolean: style('dark_blue'),
-    function: style('yellow'),
-    number: style('aqua'),
-    string: style('light_purple'),
-    symbol: style('minecoin_gold')
+function proxify(obj) {
+    return new Proxy(obj, {
+        get(t, p) {
+            return style(t[p])
+        },
+        set() {
+            return false
+        }
+    })
 }
 
-export const objectProp = {
-    setterGetter: style('dark_green'),
-    innenumerable: style('green'),
-    preview: style('gray'),
-    normal: style('blue'),
-    prototype: style('dark_gray'),
-    symbol: style('minecoin_gold')
-}
+export const basic = proxify({
+    undefined: 'dark_blue',
+    boolean: 'dark_blue',
+    function: 'yellow',
+    number: 'aqua',
+    string: 'light_purple',
+    symbol: 'minecoin_gold'
+})
+
+export const objectProp = proxify({
+    setterGetter: 'dark_green',
+    innenumerable: 'green',
+    preview: 'gray',
+    normal: 'blue',
+    prototype: 'dark_gray',
+    symbol: 'minecoin_gold'
+})

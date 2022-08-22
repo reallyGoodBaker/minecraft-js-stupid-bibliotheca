@@ -1,17 +1,17 @@
-import {register} from './terminal.js'
+import { register } from './terminal.js'
 import { mbf, style, getTab } from "./msgblock.js";
 import { RawTeller } from "./sender.js";
-import {TConsole} from './tconsole.js'
+import { TConsole } from './tconsole.js'
 
 const UNTRUSTED_HEADER = 'Untrusted >';
-const UNTRUSTED_HEADER_PREFIX = mbf(style('italic'), style('red'), UNTRUSTED_HEADER);
+const UNTRUSTED_HEADER_PREFIX = () => mbf(style('italic'), style('red'), UNTRUSTED_HEADER);
 
-function sendUntrusted(msg, selector) {
-    RawTeller.rawTeller.send(UNTRUSTED_HEADER_PREFIX + getTab() + msg, selector);
+function sendUntrusted(msg) {
+    RawTeller.rawTeller.send(UNTRUSTED_HEADER_PREFIX() + getTab() + msg);
 }
 
-function send(msg, selector) {
-    RawTeller.rawTeller.send(msg, selector);
+function send(msg) {
+    RawTeller.rawTeller.send(msg);
 }
 
 const ConsoleSpecified = {
@@ -31,7 +31,7 @@ async function _openLogic(terminal, index, msgBuilder) {
 }
 
 async function _backLogic(terminal, msgBuilder) {
-    if(!terminal.index) return;
+    if (!terminal.index) return;
 
     let data = terminal.clearContext();
     let msg = await msgBuilder('normal', data);
@@ -46,12 +46,12 @@ class Context {
         this.data = data;
         this.previews = previews;
     }
- }
+}
 
 export class ConsoleTerminal {
     static contexts = [];
     static counter = -1;
-    context  = null;
+    context = null;
     index = 0;
 
     constructor(msgBuilder) {
@@ -84,7 +84,7 @@ export class ConsoleTerminal {
         TConsole.__emitter__.on('--object', data => {
             ConsoleTerminal.counter = -1;
             this.context = new Context(data, [...arr]);
-            if(!ConsoleTerminal.contexts.length) this.pushContext();
+            if (!ConsoleTerminal.contexts.length) this.pushContext();
         })
 
         TConsole.__emitter__.on('--preview', data => {
@@ -111,7 +111,7 @@ export class ConsoleTerminal {
         this.context = ConsoleTerminal.contexts[this.index];
     }
 
-    get(index=0) {
+    get(index = 0) {
         return this.context.previews[index];
     }
 

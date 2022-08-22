@@ -1,13 +1,13 @@
-import {basic} from './style.js'
-import {mbf, style} from './msgblock.js'
+import { basic } from './style.js'
+import { mbf, style } from './msgblock.js'
 
 export function safeString(string) {
-    return string.replace(/"/g,'\\"');
+    return string.replace(/"/g, '\\"');
 }
 
 export function basicTypeMsg(data) {
     const basicType = typeof data;
-    if(basicType in basic) return basicTypeParser(data, basicType);
+    if (basicType in basic) return basicTypeParser(data, basicType);
 }
 
 export function functionMsg(data, color) {

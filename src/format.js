@@ -1,3 +1,12 @@
+let formatting = 'minecraft'
+
+/**
+ * @param {'minecraft'|'ansiEscapeSeq'} type 
+ */
+export function setFormatting(type) {
+    formatting = type
+}
+
 export const Formatting = {
     black: "§0",
     dark_blue: "§1",
@@ -21,6 +30,39 @@ export const Formatting = {
     italic: "§o",
     reset: "§r",
     normal: ''
+}
+
+export const FormattingANSLEscapeSequences = {
+    black: "\x1b[30m",
+    dark_blue: "\x1b[34m",
+    dark_green: "\x1b[32m",
+    dark_aqua: "\x1b[36m",
+    dark_red: "\x1b[31m",
+    dark_purple: "\x1b[35m",
+    dark_gray: "\x1b[90m",
+    gold: "\x1b[93m",
+    gray: "\x1b[37m",
+    blue: "\x1b[94m",
+    green: "\x1b[92m",
+    aqua: "\x1b[96m",
+    red: "\x1b[91m",
+    light_purple: "\x1b[95m",
+    yellow: "\x1b[33m",
+    white: "\x1b[97m",
+    minecoin_gold: "\x1b[93m",
+    obfuscated: "\x1b[7m",
+    bold: "\x1b[1m",
+    italic: "\x1b[3m",
+    reset: "\x1b[0m",
+    normal: ''
+};
+
+export function style(key) {
+    if (formatting === 'minecraft') {
+        console.trace()
+    }
+    return formatting === 'minecraft'? Formatting[key]
+        : FormattingANSLEscapeSequences[key]
 }
 
 

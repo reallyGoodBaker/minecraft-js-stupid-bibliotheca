@@ -1,21 +1,25 @@
-import {basicTypeMsg, safeString} from './type_wrapper.js'
-import {toString, doRegisterSpecParsers} from './obj2str.js';
-import {getRawTeller} from './sender.js'
+import { basicTypeMsg, safeString } from './type_wrapper.js'
+import { toString, doRegisterSpecParsers } from './obj2str.js';
+import { getRawTeller } from './sender.js'
 import { style, mbf, getTab } from './msgblock.js';
-import {getfstr, initfstring} from './fstring.js';
-import {ConsoleTerminal} from './commands.js'
-import {TConsole} from './tconsole.js'
+import { getfstr, initfstring } from './fstring.js';
+import { ConsoleTerminal } from './commands.js'
+import { TConsole } from './tconsole.js'
 
-export function initConsole(commander, selector) {
+/**
+ * @param {(msg: string) => void} receiver 
+ * @returns {TConsole}
+ */
+export function initConsole(receiver) {
 
     doRegisterSpecParsers();
     initfstring();
 
 
-    const rawSend = getRawTeller(commander);
-    const send = async msg => rawSend(await msg, selector);
+    const rawSend = getRawTeller(receiver);
+    const send = async msg => rawSend(await msg);
 
-    async function buildMsg(s='white', ...args) {
+    async function buildMsg(s = 'white', ...args) {
         let res = mbf('', style(s));
         let i = -1;
 
@@ -26,8 +30,8 @@ export function initConsole(commander, selector) {
 
         for (const cur of args) {
             i++;
-            let msg = typeof cur === 'object'? await toString(cur, TConsole.showDetail): 
-                typeof cur === 'string'? mbf('', style(s), safeString(cur)): basicTypeMsg(cur);
+            let msg = typeof cur === 'object' ? await toString(cur, TConsole.showDetail) :
+                typeof cur === 'string' ? mbf('', style(s), safeString(cur)) : basicTypeMsg(cur);
 
             if (i) res.push(getTab());
             res.push(msg);
@@ -36,7 +40,7 @@ export function initConsole(commander, selector) {
         return res;
     }
 
-    new ConsoleTerminal(buildMsg, selector);
+    new ConsoleTerminal(buildMsg);
 
     function log(...args) {
         let res;
@@ -71,14 +75,14 @@ export function initConsole(commander, selector) {
         send(res);
     }
 
-    function getTraceStack(sliceStart=0) {
-        return Error('').stack.split('\n').slice(sliceStart+2).join('\n');
+    function getTraceStack(sliceStart = 0) {
+        return Error('').stack.split('\n').slice(sliceStart + 2).join('\n');
     }
 
     function trace() {
         let stack = getTraceStack(1);
         stack = 'trace():\n' + stack;
-        
+
         send(buildMsg('white', stack));
     }
 
@@ -89,12 +93,12 @@ export function initConsole(commander, selector) {
     }
 
     let _counts = {};
-    function count(label='default') {
-        _counts[label]? _counts[label]++: _counts[label] = 1;
+    function count(label = 'default') {
+        _counts[label] ? _counts[label]++ : _counts[label] = 1;
         log(`${label}: ${_counts[label]}`);
     }
 
-    function countReset(label='default') {
+    function countReset(label = 'default') {
         if (_counts[label]) {
             delete _counts[label];
         }
@@ -107,11 +111,11 @@ export function initConsole(commander, selector) {
         _tickNow++;
     }
 
-    function time(label='default') {
+    function time(label = 'default') {
         _timers[label] = _tickNow;
     }
 
-    function timeLog(label='default') {
+    function timeLog(label = 'default') {
         let tkNow = _tickNow;
         let tkBefore = _timers[label];
 
@@ -124,7 +128,7 @@ export function initConsole(commander, selector) {
         log(`${label}: ${res} ticks (${res * 50} ms)`);
     }
 
-    function timeEnd(label='default') {
+    function timeEnd(label = 'default') {
         timeLog(label);
         if (_timers[label]) {
             delete _timers[label];
@@ -142,10 +146,12 @@ export function initConsole(commander, selector) {
     }
 
     const _console = {
-        log, error, warn, trace, assert, count, countReset, 
+        log, error, warn, trace, assert, count, countReset,
         time, timeLog, timeEnd
     }
 
-    return new TConsole({update, console: _console});
+    return new TConsole({ update, console: _console });
 
 }
+
+export default initConsole

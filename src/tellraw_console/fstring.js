@@ -67,14 +67,14 @@ export function initfstring() {
             return mbf('', basic.number, new Number(value).toFixed(0));
         }
     });
-    
+
     addFormat({
         checker: /%[o|O]/,
         async parse(v) {
             return mbf(style('italic'), style('normal'), await toString(v, TConsole.showDetail));
         }
     });
-    
+
     addFormat({
         checker: /%(.*?)f/,
         parse(v, $, $1) {
