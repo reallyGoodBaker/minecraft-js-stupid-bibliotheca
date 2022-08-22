@@ -1,7 +1,6 @@
-import {Dimension, Entity} from 'mojang-minecraft'
 import { EventEmitter } from 'events';
 
-declare type Commander = Dimension | Entity;
+declare type Receiver = (msg: string) => void
 
 interface TTerminal {
     register(command: string, handler: (em: EventEmitter) => void, opt?: any): void;
@@ -24,17 +23,14 @@ interface TellrawConsole {
 }
 
 interface TConsole extends TTerminal{
-    getInstance(): TConsole;
     getConsole(): TellrawConsole;
     injectConsole(): void;
-
+    setFormatting(type: 'minecraft'|'ansiEscapeSeq'): void
     showDetail(bool: boolean): void;
     tabSize(count: number): void;
     update(): void;
-    selector(): string;
-    selector(selector: string): void;
     on(type: string, handler: (...args: any[]) => void): TConsole;
     off(type: string, handler: (...args: any[]) => void): void;
 }
 
-export var initConsole: (commander: Commander, selector: string) => TConsole;
+export var initConsole: (receiver: Receiver) => TConsole;

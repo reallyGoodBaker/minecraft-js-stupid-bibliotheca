@@ -2,7 +2,7 @@ export default {
     input: './index.js',
     output: [
         {
-            file: '../../dist/tellraw-console.js',
+            file: '../../dist/tellraw-console/console.js',
             format: 'esm'
         }
     ]
