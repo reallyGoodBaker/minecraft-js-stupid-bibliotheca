@@ -2,12 +2,14 @@
 
 # 快速上手
 
+如果你是从 `MineBBS`  跳转到此处的，请先拉到 <a href="#兼容-CommonJS">最下面</a>
+
 ## 1. 注入 `console`
 
 ```js
 //main.js
 
-import {initConsole} from './tellraw-console'
+import {initConsole} from './console.js'
 import {world} from 'mojang-minecraft'
 
 const mcPrint = msg => {
@@ -25,8 +27,6 @@ console.log({
     bar: "World",
 })//试试console吧！
 ```
-
-
 
 ## 2. 使用  `TConsole.exec`
 
@@ -84,11 +84,7 @@ tConsole.exec('con -o 1')// 展开$1
 
 这就是快速上手的全部内容了，若你想知道更多的细节，请往下看~
 
-
-
 # 输入与输出
-
-
 
 TellrawConsole 的输入与输出都过于简单，所以并没有写成标准输入输出的形态，但：
 
@@ -104,8 +100,6 @@ TConsole.prototype.exec(cmd: string, onerror: (err: any) => void): Promise<boole
 
 可以看成输入。
 
-
-
 # 拓展
 
 `TTerminal`  类为  `TConsole`  提供了类似控制台处理命令的能力，例：
@@ -120,8 +114,6 @@ tConsole.register('test', () => {
 
 tConsole.exec('test')//This is a test
 ```
-
-
 
 如果你要处理多参数的指令，就需要   `启动子`  (随便编的名字，别在意)，它的作用是在指令中标记出一个数组作为使用  `启动子`  名称注册的事件（事件监听器）的参数。例：
 
@@ -150,13 +142,9 @@ tConsole.exec('test -foo bar -bar "I am " ikun')
 
 **注意：** `启动子`  必须以 `-` 字符开始，参数数量可以是0
 
-
-
 # API
 
 偷懒挂描述文件算了
-
-
 
 ## TTerminal
 
@@ -170,8 +158,6 @@ interface TTerminal {
     exec(commandString: string, onerror: (err: Error) => void): Promise<boolean>;
 }
 ```
-
-
 
 ## TellrawConsole
 
@@ -190,8 +176,6 @@ interface TellrawConsole {
     timeEnd(label?: any): void;
 }
 ```
-
-
 
 ## Tconsole
 
@@ -215,15 +199,11 @@ interface TConsole extends TTerminal{
 }
 ```
 
-
-
 ## initConsole
 
 ```ts
 initConsole(receiver: (msg: string) => void): TConsole;
 ```
-
-
 
 # 样式
 
@@ -233,8 +213,6 @@ initConsole(receiver: (msg: string) => void): TConsole;
 
 `ansiEscapeSeq` ：[ANSI Escape Sequences](https://www.tw.studiodahu.com/baike-ANSI%E8%BD%AC%E4%B9%89%E5%BA%8F%E5%88%97)，用于支持ANSI转义序列的控制台程序，如`Powershell`  和  `Windows Terminal`
 
-
-
 使用：
 
 ```js
@@ -242,5 +220,11 @@ initConsole(receiver: (msg: string) => void): TConsole;
 const tConsole = initConsole(somePrintFunc);
 tConsole.setFormatting('ansiEscapeSeq')
 ```
+
+<div id="兼容-CommonJS"></div>
+
+## 兼容 CommonJS
+
+方法：将所有 `import {initConsole} from './console.js'`  替换为  `const {initConsole} = require('./full.console')`
 
 
