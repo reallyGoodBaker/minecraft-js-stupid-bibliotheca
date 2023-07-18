@@ -1,5 +1,5 @@
 export type PrimaryTypes = "string" | "number" | "bigint" | "boolean" | "symbol" | "undefined" | "object" | "function" | 'virtual';
-export type TokenTypes = 'key' | 'value' | 'field' | 'inst' | 'accessor' | 'getter' | 'setter';
+export type TokenTypes = 'key' | 'value' | 'field' | 'inst' | 'accessor' | 'getter' | 'setter' | 'item';
 export interface IToken {
     readonly tokenType: TokenTypes;
     readonly basicType: PrimaryTypes;

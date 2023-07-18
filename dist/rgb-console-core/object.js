@@ -1,20 +1,4 @@
 import { createToken } from './token.js';
-// export function parseObject(obj: any) {
-//     const keys = Reflect.ownKeys(obj)
-//     // console.log(Object.getOwnPropertyDescriptor(obj, 'a'))
-//     const root = createToken(
-//         'inst', 'object', getCtorName(obj), obj, null, []
-//     )
-//     for (const k of keys) {
-//         const v = obj[k]
-//         const tField = createToken('field', 'virtual', '', null, root, [])
-//         const tKey = createToken('key', typeof k, getCtorName(k), k, tField, [])
-//         const tVal = createToken('value', typeof v, getCtorName(v), v, tField, [])
-//         tField.children.push(tKey, tVal)
-//         root.children.push(tField)
-//     }
-//     return root
-// }
 export function parseObject(obj) {
     const root = createToken('inst', 'object', getCtorName(obj), obj, null, []);
     const descs = Reflect.ownKeys(obj).map(k => [k, Object.getOwnPropertyDescriptor(obj, k)]);
@@ -40,9 +24,6 @@ export function parseObject(obj) {
             tAccessor.children.push(createToken('setter', 'function', getCtorName(set), set, tAccessor, []));
         }
         root.children.push(tAccessor);
-    }
-    for (const k of Object.getOwnPropertySymbols(obj)) {
-        const v = obj[k];
     }
     return root;
 }
