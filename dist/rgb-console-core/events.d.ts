@@ -1,0 +1,35 @@
+export class EventEmitter {
+    constructor(opt: any);
+    maxListeners: number;
+    _events: {};
+    captureRejections: boolean;
+    thisArg: {};
+    setMaxListeners(size: any): this;
+    getMaxListeners(): number;
+    _thisGetter: () => {};
+    _getEventLinked(type: any): any;
+    _canAddNew(size: any): boolean;
+    _addListener(type: any, handler: any, prepend?: boolean, once?: boolean): void;
+    addListener(type: any, handler: any): this;
+    on(type: any, handler: any): this;
+    prependListener(type: any, handler: any): this;
+    _removeListener(type: any, handler: any): this;
+    removeListener(type: any, handler: any): this;
+    off(type: any, handler: any): this;
+    removeAllListeners(type: any): void;
+    _emit(type: any, nullContext?: boolean, ...args: any[]): void;
+    _emitError(err: any): void;
+    emit(type: any, ...args: any[]): void;
+    emitNone(type: any, ...args: any[]): void;
+    once(type: any, handler: any): this;
+    prependOnceListener(type: any, handler: any): this;
+    listenerCount(type: any): any;
+    listeners(type: any): any[];
+    rawListeners(type: any): any[];
+    eventNames(): (string | symbol)[];
+    _enableWatcher: any;
+    _watcher: any;
+    connectWatcher(watcher: any): void;
+    disconnectWatcher(): void;
+    _callWatcherMethod(name: any, arg: any): void;
+}
