@@ -33,7 +33,6 @@ class Printer {
             if (t.tokenType === 'getter' || t.tokenType === 'setter') {
                 str += `${t.content.name}()\n`;
             }
-            // console.log(t)
         };
         this.traverse(root, handler);
         console.log(str);
