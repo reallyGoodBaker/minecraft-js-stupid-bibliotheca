@@ -1,3 +1,4 @@
+import { parsePrototype } from './inner-attributes.js'
 import { createToken } from './token.js'
 
 export function parseObject(obj: any) {
@@ -46,11 +47,21 @@ export function parseObject(obj: any) {
         root.children.push(tAccessor)
     }
 
+    parsePrototype(obj, root)
+
     return root
 }
 
 export function getCtorName(obj: any) {
-    const ctor = Object.getPrototypeOf(obj).constructor || Object.prototype
+    if (obj === null || obj === undefined) {
+        return 'empty'
+    }
+
+    const ctor = (Object.getPrototypeOf(obj) ?? Object.prototype).constructor
 
     return ctor.name
+}
+
+export function getEnumerable(obj: any, p: string | number | symbol) {
+    return Object.getOwnPropertyDescriptor(obj, p)?.enumerable
 }

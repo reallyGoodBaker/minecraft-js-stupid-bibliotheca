@@ -1,3 +1,4 @@
+import { parsePrototype } from './inner-attributes.js';
 import { createToken } from './token.js';
 export function parseObject(obj) {
     const root = createToken('inst', 'object', getCtorName(obj), obj, null, []);
@@ -25,9 +26,16 @@ export function parseObject(obj) {
         }
         root.children.push(tAccessor);
     }
+    parsePrototype(obj, root);
     return root;
 }
 export function getCtorName(obj) {
-    const ctor = Object.getPrototypeOf(obj).constructor || Object.prototype;
+    if (obj === null || obj === undefined) {
+        return 'empty';
+    }
+    const ctor = (Object.getPrototypeOf(obj) ?? Object.prototype).constructor;
     return ctor.name;
+}
+export function getEnumerable(obj, p) {
+    return Object.getOwnPropertyDescriptor(obj, p)?.enumerable;
 }
