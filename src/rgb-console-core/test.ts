@@ -1,5 +1,3 @@
-import { parseArray, parseEntries, parseIterable, parseMap, parseSet } from "./iterable.js"
-import { parseObject } from "./object.js"
 import { printer } from "./quick-printer.js"
 
 const obj1 = {
@@ -29,13 +27,6 @@ const map = new Map()
 map.set('foo', 'bar')
 map.set(s, 'cool')
 map.set('s', s)
-
-// console.log(parseObject(obj1))
-// console.log(parseObject(obj2))
-// console.log(parseArray(arr), parseIterable(arr), parseEntries(arr))
-
-// console.log(parseSet(s))
-// console.log(parseMap(map))
 
 printer.print(1)
 printer.print('wow')
