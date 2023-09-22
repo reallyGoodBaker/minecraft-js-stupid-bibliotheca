@@ -1,4 +1,6 @@
-import { printer } from "./quick-printer.js"
+import { Printer } from "./quick-printer.js"
+
+const printer = new Printer()
 
 const obj1 = {
     a: 'cool',
@@ -35,3 +37,4 @@ printer.print(obj2)
 printer.print(arr)
 printer.print(s)
 printer.print(map)
+// console.log(map)
