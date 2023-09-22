@@ -4,7 +4,10 @@ export enum Basic {
     function = 'yellow',
     number = 'aqua',
     string = 'light_purple',
-    symbol = 'minecoin_gold'
+    symbol = 'minecoin_gold',
+    cls = 'minecoin_gold',
+    keywords = 'minecoin_gold',
+    raw = 'white',
 }
 
 export enum ObjectProp {

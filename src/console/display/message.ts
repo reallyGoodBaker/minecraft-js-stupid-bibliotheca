@@ -1,12 +1,12 @@
 import { FormattingTypes, style } from './format';
-import { Style } from './styles'
+import { Basic, Style } from './styles'
 
 interface Message {
     toString(): string
 }
 
 export class StyledMessage implements Message {
-    #style: string[] = []
+    #style: string[] = [ ]
     #message: string[] = []
     #type: FormattingTypes
 
@@ -39,6 +39,7 @@ export class StyledMessage implements Message {
         }
 
         if (!styleStack.length) {
+            this.#message.push(this.#s(Basic.raw))
             return
         }
 
