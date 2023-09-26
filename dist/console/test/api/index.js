@@ -448,6 +448,9 @@ function genPreview(o, format = FormattingTypes.ESCAPE_SEQ) {
     }
     return genGeneric(o, format);
 }
+function genFunc(func) {
+    return func.toString();
+}
 function genPartialArrayLike(arr, maxItemCount = 10, format = FormattingTypes.ESCAPE_SEQ) {
     const message = new StyledMessage(format);
     const arrCtorName = getCtorName(arr);
@@ -575,6 +578,23 @@ function genObjectMessage(o, addons, format = FormattingTypes.ESCAPE_SEQ, paddin
         addon.call(null, tokenTree, message, format, paddingSize);
     });
     return message.toString();
+}
+function genMessage(o, p, f = FormattingTypes.ESCAPE_SEQ) {
+    if (typeof o === 'function') {
+        return genFunc(o);
+    }
+    if (typeof o !== 'object') {
+        return genPartial(o, 10, f);
+    }
+    return genObjectMessage(o, [
+        instanceScope,
+        arrayLike,
+        entries,
+        objectField,
+        accessor,
+        o instanceof Set ? () => { } : prototypeEnumerableFields,
+        getterSetter,
+    ], f, p);
 }
 
 const objectField = (t, m, f) => {
@@ -713,102 +733,50 @@ const prototypeEnumerableFields = (t, m, f, p) => {
     }
 };
 
+let $ = {
+    started: false,
+    out: Function.prototype,
+    err: Function.prototype,
+};
+const defaultLoggerOption = {
+    paddingSize: 2,
+    format: FormattingTypes.ESCAPE_SEQ,
+};
+const outBuffer = [];
+function printer(level, args, opt = defaultLoggerOption) {
+    let _args = Array.isArray(args) ? args : [args];
+    if (!$.started) {
+        outBuffer.concat(..._args);
+        return;
+    }
+    if (outBuffer.length) {
+        _args = outBuffer.splice(0, outBuffer.length).concat(..._args);
+    }
+    for (const arg of _args) {
+        $.out(genMessage(arg, opt.paddingSize, opt.format));
+    }
+}
+
+$.started = true;
+$.out = v => console.log(v);
 const obj1 = {
     a: 'cool',
     b: 1,
     c: 'good'
 };
 let set = new Set([1, , 2, 3, 4, 'foo', 'bar']);
-// console.log(genFuncPreview(async function foo() {}))
-// console.log(getFuncSign(async () => {}))
-// console.log(genKey(tokens.content, true))
-// console.log(
-//     genComplexPreview([ 1, 2, 3 ]),
-//     genComplexPreview({}),
-//     genComplexPreview(obj1)
-// )
-// console.log(
-//     genComplexPreview(set),
-// )
-new Map()
-    .set(obj1, 'cool')
-    .set('ok', set)
-    .set(set, obj1);
-// ;[
-//     genPreview(async function foo() {}),
-//     genPreview(async () => {}),
-//     genPreview([ 1, 2, 3 ]),
-//     genPreview({}),
-//     genPreview(set),
-//     genPreview(obj1),
-//     genPreview('hello world!'),
-//     genPreview(Symbol('symbol')),
-//     genPartialIterable([ 1, 1, 4, 5, 1, , 4 ]),
-//     genPartialArrayLike([ 1, 1, 4, 5, 1, , 4 ]),
-//     genPartialEntries(map),
-//     genPartialEntries(set),
-// ].forEach(el => {
-//     console.log(el)
-// })
-// console.log(parse([
-//     1, [ 2, 3 ], 3, , 5,
-// ]))
-// ;[
-//     genPartial(async function foo() {}),
-//     genPartial(async () => {}),
-//     genPartial([ 1, 2, 3 ]),
-//     genPartial({}),
-//     genPartial(set),
-//     genPartial(obj1),
-//     genPartial('hello world!'),
-//     genPartial(Symbol('symbol')),
-//     genPartial([ 1, 1, 4, 5, 1, , 4 ]),
-//     genPartial(map),
-//     genPartial(set),
-// ].forEach(el => {
-//     console.log(el)
-// })
-const plugins = [
-    instanceScope,
-    arrayLike,
-    entries,
-    objectField,
-    accessor,
-    prototypeEnumerableFields,
-    getterSetter,
-];
-// ;[
-//     genObjectMessage(obj1, plugins),
-//     genObjectMessage([ 1, 1, 4, 5, 1, , 4 ], plugins),
-//     genObjectMessage([ 1, 1, 4, 5, 1, [ 1, 1, 4, 5, 1, { a: 1 }, 4 ], 4 ], plugins),
-//     genObjectMessage('hello world', plugins),
-//     genObjectMessage(set, plugins),
-//     genObjectMessage(map, plugins),
-//     genObjectMessage(obj2, plugins),
-// ].forEach(el => {
-//     console.log(el)
-// })
-const div = document.createElement('div');
-[
-    genObjectMessage(div, plugins),
-].forEach(el => {
-    console.log(el);
-});
-console.log('%O', div);
-// class A {
-//     a = 1
-//     get b() {
-//         return 1
-//     }
-//     get foo() {
-//         return false
-//     }
-// }
-// class B extends A {}
-// const b = new B()
-// console.log(b)
-// ;[
-//     genObjectMessage(b, plugins),
-// ].forEach(el => {
-//     console.log(el)
-// })
+let sym = Symbol('sym');
+const obj2 = {
+    [Symbol()]: 'wow, symbol!',
+    obj1,
+    get a() { return set; },
+    get b() { return Math.random(); },
+    [sym]: () => 1,
+};
+printer('error', [
+    obj2,
+    obj1,
+    set,
+    'Hello World',
+    114.514,
+]);

@@ -4,9 +4,10 @@ import {
     getCtorName,
     parse
 } from '../core/index.js'
+import { instanceScope, arrayLike, entries, objectField, accessor, prototypeEnumerableFields, getterSetter } from './addons.js'
 
 import { FormattingTypes } from './format.js'
-import { Message, MultilineMessage, StyledMessage } from './message.js'
+import { MultilineMessage, StyledMessage } from './message.js'
 import { Basic, ObjectProp } from './styles.js'
 
 export function genKey(k: any, fullTypes = false, format: FormattingTypes = FormattingTypes.ESCAPE_SEQ) {
@@ -33,7 +34,7 @@ export function genKey(k: any, fullTypes = false, format: FormattingTypes = Form
         message.addStyle(ObjectProp.normal)
     }
 
-    message.addText(k.toString())
+    message.addText(String(k))
 
     return message.toString()
 }
@@ -69,27 +70,51 @@ export function genGeneric(obj: any, format: FormattingTypes = FormattingTypes.E
     }
 }
 
+export enum FunctionTypes {
+    NORMAL,
+    GETTER,
+    SETTER,
+}
+
 export function getFuncSign(func: Function) {
     let fstr = func.toString()
     let anonymous = true
     let asyncSign = fstr.startsWith('async')
+    let type = FunctionTypes.NORMAL
 
     if (asyncSign) {
         fstr = fstr.slice(5).trim()
     }
 
     if (func.name) {
+        const start = fstr.indexOf('(')
         const end = fstr.indexOf(')')
 
-        anonymous = false
-        fstr = fstr.slice(8, end + 1)
-            .trim()
+        anonymous = start === 0
+
+        if (!anonymous) {
+            const params = fstr.slice(start, end + 1).trim()
+            let name = fstr.slice(0, start)
+            
+            if (name.startsWith('get')) {
+                name = name.slice(4)
+                type = FunctionTypes.GETTER
+            }
+
+            if (name.startsWith('set')) {
+                name = name.slice(4)
+                type = FunctionTypes.SETTER
+            }
+
+            fstr = name + params
+        }
     }
 
     return {
         async: asyncSign,
         sign: fstr,
         anonymous,
+        type,
     }
 }
 
@@ -120,7 +145,7 @@ export function genComplexPreview(o: any, format: FormattingTypes = FormattingTy
     const message = new StyledMessage(format)
 
     if (ctorName === 'Object') {
-        const preview = Reflect.ownKeys(o).length ? '{...}' : '{}'
+        const preview = Reflect.ownKeys(o).length ? '{…}' : '{}'
 
         return message
             .addText(preview)
@@ -131,9 +156,9 @@ export function genComplexPreview(o: any, format: FormattingTypes = FormattingTy
         if (o.length > 0) {
             return message
                 .addStyle(Basic.raw)
-                .addText('[...')
+                .addText('(')
                 .addBlock(o.length, [ Basic.number ])
-                .addText(']')
+                .addText(')[…]')
                 .toString()
         }
 
@@ -192,7 +217,7 @@ export function genPartialArrayLike(arr: ArrayLike<any>, maxItemCount=10, format
         const item = arr[count]
 
         if (count === maxItemCount) {
-            message.addText(', ...')
+            message.addText(', …')
             break
         }
 
@@ -223,7 +248,7 @@ export function genPartialIterable(it: Iterable<any>, maxItemCount=10, format: F
 
     for (const item of it) {
         if (count === maxItemCount) {
-            message.addText(', ...')
+            message.addText(', …')
             break
         }
 
@@ -255,7 +280,7 @@ export function genPartialEntries(
 
     for (const [ k ,v ] of e.entries()) {
         if (count === maxItemCount) {
-            message.addText(', ...')
+            message.addText(', …')
             break
         }
 
@@ -282,16 +307,17 @@ export function genPartialObject(
     format: FormattingTypes = FormattingTypes.ESCAPE_SEQ
 ) {
     const message = new StyledMessage(format)
+    const ctorName = getCtorName(o)
 
     let count = 0
 
     message
         .addStyle(Basic.raw)
-        .addText(getCtorName(o) + ' {')
+        .addText((ctorName === 'Object' ? '' : `${ctorName} `) + '{')
 
     for (const [ k ,v ] of Object.entries(o)) {
         if (count === maxItemCount) {
-            message.addText(', ...')
+            message.addText(', …')
             break
         }
 
@@ -314,6 +340,10 @@ export function genPartialObject(
 
 export function genPartial(o: any, maxItemCount=10, format: FormattingTypes = FormattingTypes.ESCAPE_SEQ) {
     if (typeof o === 'object') {
+        if (o === null) {
+            return genPreview(o, format)
+        }
+
         if (typeof o.length === 'number') {
             return genPartialArrayLike(o, maxItemCount, format)
         }
@@ -337,13 +367,33 @@ export function genPartial(o: any, maxItemCount=10, format: FormattingTypes = Fo
     return genPreview(o, format)
 }
 
-export function genObjectMessage(o: any, addons: ((t: IToken, m: Message) => void)[], format: FormattingTypes = FormattingTypes.ESCAPE_SEQ, paddingSize=2) {
+export function genObjectMessage(o: any, addons: ((t: IToken, m: MultilineMessage, f: FormattingTypes, p: number) => void)[], format: FormattingTypes = FormattingTypes.ESCAPE_SEQ, paddingSize=2) {
     const tokenTree = parse(o)
     const message = new MultilineMessage(format, paddingSize)
 
     addons.forEach(addon => {
-        addon.call(null, tokenTree, message)
+        addon.call(null, tokenTree, message, format, paddingSize)
     })
 
     return message.toString()
+}
+
+export function genMessage(o: any, p: number, f=FormattingTypes.ESCAPE_SEQ) {
+    if (typeof o === 'function') {
+        return genFunc(o)
+    }
+
+    if (typeof o !== 'object') {
+        return genPartial(o, 10, f)
+    }
+
+    return genObjectMessage(o, [
+        instanceScope,
+        arrayLike,
+        entries,
+        objectField,
+        accessor,
+        o instanceof Set ? () => {} : prototypeEnumerableFields,
+        getterSetter,
+    ], f, p)
 }

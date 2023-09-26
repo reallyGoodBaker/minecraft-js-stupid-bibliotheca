@@ -1,4 +1,4 @@
-import { FormattingTypes, style } from './format';
+import { FormattingTypes, style } from './format'
 import { Basic, Style } from './styles'
 
 export interface Message {
