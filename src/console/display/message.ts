@@ -1,7 +1,7 @@
 import { FormattingTypes, style } from './format';
 import { Basic, Style } from './styles'
 
-interface Message {
+export interface Message {
     toString(): string
 }
 
@@ -40,7 +40,7 @@ export class StyledMessage implements Message {
 
         if (!styleStack.length) {
             this.#message.push(this.#s(Basic.raw))
-            return
+            return this
         }
 
         const currentStyle = styleStack[styleStack.length - 1]
@@ -70,5 +70,38 @@ export class StyledMessage implements Message {
 
     toString() {
         return this.#message.join('')
+    }
+}
+
+export class MultilineMessage extends StyledMessage {
+    #nestedHierarchies = 0
+    #paddingSize = 2
+
+    constructor(
+        format?: FormattingTypes,
+        paddingSize?: number
+    ) {
+        super(format)
+
+        paddingSize && (this.#paddingSize = paddingSize)
+    }
+
+    nest(hierarchy: number = 1) {
+        this.#nestedHierarchies += hierarchy
+        return this
+    }
+
+    unnest(hierarchy: number = 1) {
+        this.#nestedHierarchies -= hierarchy
+        return this
+    }
+
+    addLine() {
+        this.addText(`\n${''.padStart(
+            this.#nestedHierarchies * this.#paddingSize,
+            ' '
+        )}`)
+
+        return this
     }
 }

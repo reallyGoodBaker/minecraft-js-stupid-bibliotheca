@@ -55,9 +55,9 @@ const map = new Map()
 //     console.log(el)
 // })
 
-// console.log(parse([
-//     1, [ 2, 3 ], 3, , 5,
-// ]))
+console.log(parse([
+    1, [ 2, 3 ], 3, , 5,
+]))
 
 ;[
     genPartial(async function foo() {}),

@@ -1,10 +1,12 @@
 
 import {
-    getCtorName
+    IToken,
+    getCtorName,
+    parse
 } from '../core/index.js'
 
 import { FormattingTypes } from './format.js'
-import { StyledMessage } from './message.js'
+import { Message, MultilineMessage, StyledMessage } from './message.js'
 import { Basic, ObjectProp } from './styles.js'
 
 export function genKey(k: any, fullTypes = false, format: FormattingTypes = FormattingTypes.ESCAPE_SEQ) {
@@ -333,4 +335,15 @@ export function genPartial(o: any, maxItemCount=10, format: FormattingTypes = Fo
     }
 
     return genPreview(o, format)
+}
+
+export function genObjectMessage(o: any, addons: ((t: IToken, m: Message) => void)[], format: FormattingTypes = FormattingTypes.ESCAPE_SEQ, paddingSize=2) {
+    const tokenTree = parse(o)
+    const message = new MultilineMessage(format, paddingSize)
+
+    addons.forEach(addon => {
+        addon.call(null, tokenTree, message)
+    })
+
+    return message.toString()
 }

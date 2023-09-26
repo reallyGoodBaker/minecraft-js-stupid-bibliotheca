@@ -257,7 +257,7 @@ class StyledMessage {
         }
         if (!styleStack.length) {
             this.#message.push(this.#s(Basic.raw));
-            return;
+            return this;
         }
         const currentStyle = styleStack[styleStack.length - 1];
         this.#message.push(currentStyle);
@@ -554,6 +554,25 @@ const map = new Map()
     .set(obj1, 'cool')
     .set('ok', set)
     .set(set, obj1);
+// ;[
+//     genPreview(async function foo() {}),
+//     genPreview(async () => {}),
+//     genPreview([ 1, 2, 3 ]),
+//     genPreview({}),
+//     genPreview(set),
+//     genPreview(obj1),
+//     genPreview('hello world!'),
+//     genPreview(Symbol('symbol')),
+//     genPartialIterable([ 1, 1, 4, 5, 1, , 4 ]),
+//     genPartialArrayLike([ 1, 1, 4, 5, 1, , 4 ]),
+//     genPartialEntries(map),
+//     genPartialEntries(set),
+// ].forEach(el => {
+//     console.log(el)
+// })
+console.log(parse([
+    1, [2, 3], 3, , 5,
+]));
 [
     genPartial(async function foo() { }),
     genPartial(async () => { }),
