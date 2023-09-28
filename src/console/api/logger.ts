@@ -1,10 +1,5 @@
 import { genMessage, FormattingTypes } from '../display/index'
-
-export let $ = {
-    started: false,
-    out: Function.prototype,
-    err: Function.prototype,
-}
+import { findSpecifier, format } from './format'
 
 type LoggerLevel = 'log' | 'info' | 'warn' | 'error'
 
@@ -18,29 +13,81 @@ const defaultLoggerOption: LoggerOption = {
     format: FormattingTypes.ESCAPE_SEQ,
 }
 
-const outBuffer = []
+const outBuffer: any[] = []
+const errBuffer: any[] = []
+
+const schedule = globalThis.requestIdleCallback || globalThis.setTimeout || Function.prototype
+
+const $start = () => {
+    const handler = () => {
+        const spliced = outBuffer.splice(0, outBuffer.length)
+
+        for (const arg of spliced) {
+            $.out(
+                genMessage(arg, $.paddingSize, $.format)
+            )
+        }
+    }
+
+    const execute = () => schedule(() => {
+        handler()
+        execute()
+    })
+
+    $.started = true
+    execute()
+}
+
+export let $ = {
+    paddingSize: 2,
+    format: FormattingTypes.ESCAPE_SEQ,
+    started: false,
+    start: $start,
+    out: Function.prototype,
+    err: Function.prototype,
+}
 
 export function printer(level: LoggerLevel, args: any, opt: LoggerOption = defaultLoggerOption) {
     let _args = Array.isArray(args) ? args : [ args ]
 
-    if (!$.started) {
-        outBuffer.concat(..._args)
-        return
+    if (level === 'error') {
+        if (!$.started) {
+            errBuffer.concat(..._args)
+            return
+        }
+    
+        if (errBuffer.length) {
+            _args = errBuffer.splice(0, errBuffer.length).concat(..._args)
+        }
+    
+        for (const arg of _args) {
+            $.err(
+                genMessage(arg, opt.paddingSize, opt.format)
+            )
+        }
     }
 
-    if (outBuffer.length) {
-        _args = outBuffer.splice(0, outBuffer.length).concat(..._args)
-    }
-
-    for (const arg of _args) {
-        $.out(
-            genMessage(arg, opt.paddingSize, opt.format)
-        )
-    }
+    outBuffer.push(..._args)
 }
 
 export function formatter(args: any[]) {
+    if (
+        args.length === 1 ||
+        typeof args[0] !== 'string'
+    ) {
+        return args
+    }
 
+    let [ target, current ] = args
+    let spec: string | null = null
+
+    if ((spec = findSpecifier(target)) === null) {
+        return args
+    }
+
+    target = format(target, spec, current, $.paddingSize, $.format)
+
+    return formatter([target, ...args.slice(2)])
 }
 
 export function logger(level: LoggerLevel, ...args: any[]) {

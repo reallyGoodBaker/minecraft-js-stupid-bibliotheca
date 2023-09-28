@@ -1,6 +1,6 @@
 import { IToken } from '../core/index'
 import { FormattingTypes } from './format'
-import { genFuncPreview, genKey, genObjectMessage, genPartial, genPreview } from './generator'
+import { genFuncPreview, genKey, genObjectMessage, genPartial } from './generator'
 import { MultilineMessage } from './message'
 import { Basic, ObjectProp } from './styles'
 

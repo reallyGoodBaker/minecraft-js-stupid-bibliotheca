@@ -4,7 +4,16 @@ import {
     getCtorName,
     parse
 } from '../core/index.js'
-import { instanceScope, arrayLike, entries, objectField, accessor, prototypeEnumerableFields, getterSetter } from './addons.js'
+
+import {
+    instanceScope,
+    arrayLike,
+    entries,
+    objectField,
+    accessor,
+    prototypeEnumerableFields,
+    getterSetter
+} from './addons.js'
 
 import { FormattingTypes } from './format.js'
 import { MultilineMessage, StyledMessage } from './message.js'
@@ -18,7 +27,7 @@ export function genKey(k: any, fullTypes = false, format: FormattingTypes = Form
             return message
                 .addStyle(ObjectProp.normal)
                 .addText(getCtorName(k) + '(')
-                .addBlock(k.size ?? k.length, [ Basic.number ])
+                .addBlock(k.size ?? k.length, [Basic.number])
                 .addText(')')
                 .toString()
         }
@@ -46,23 +55,23 @@ export function genGeneric(obj: any, format: FormattingTypes = FormattingTypes.E
         case 'bigint':
         case 'number':
             return message
-                .addBlock(obj.toString(), [ Basic.number ])
+                .addBlock(obj.toString(), [Basic.number])
                 .toString()
 
         case 'boolean':
         case 'undefined':
             return message
-                .addBlock(`${obj}`, [ Basic.undefined ])
+                .addBlock(`${obj}`, [Basic.undefined])
                 .toString()
-        
+
         case 'string':
             return message
-                .addBlock(`'${obj}'`, [ Basic.string ])
+                .addBlock(`'${obj}'`, [Basic.string])
                 .toString()
-        
+
         case 'symbol':
             return message
-                .addBlock(obj.toString(), [ Basic.symbol ])
+                .addBlock(obj.toString(), [Basic.symbol])
                 .toString()
 
         default:
@@ -95,7 +104,7 @@ export function getFuncSign(func: Function) {
         if (!anonymous) {
             const params = fstr.slice(start, end + 1).trim()
             let name = fstr.slice(0, start)
-            
+
             if (name.startsWith('get')) {
                 name = name.slice(4)
                 type = FunctionTypes.GETTER
@@ -128,11 +137,11 @@ export function genFuncPreview(func: Function, format: FormattingTypes = Formatt
     let message = new StyledMessage(format)
 
     if (isAsync) {
-        message.addBlock('async ', [ Basic.function ])
+        message.addBlock('async ', [Basic.function])
     }
 
     if (!anonymous) {
-        message.addBlock('f ', [ Basic.function ])
+        message.addBlock('f ', [Basic.function])
     }
 
     message.addText(funcSign)
@@ -157,13 +166,13 @@ export function genComplexPreview(o: any, format: FormattingTypes = FormattingTy
             return message
                 .addStyle(Basic.raw)
                 .addText('(')
-                .addBlock(o.length, [ Basic.number ])
+                .addBlock(o.length, [Basic.number])
                 .addText(')[…]')
                 .toString()
         }
 
         return message
-            .addBlock('[]', [ Basic.raw ])
+            .addBlock('[]', [Basic.raw])
             .toString()
     }
 
@@ -171,13 +180,13 @@ export function genComplexPreview(o: any, format: FormattingTypes = FormattingTy
         return message
             .addStyle(Basic.raw)
             .addText(getCtorName(o) + '(')
-            .addBlock(o.size ?? o.length, [ Basic.number ])
+            .addBlock(o.size ?? o.length, [Basic.number])
             .addText(')')
             .toString()
     }
 
     return message
-        .addBlock(getCtorName(o), [ Basic.raw ])
+        .addBlock(getCtorName(o), [Basic.raw])
         .toString()
 }
 
@@ -191,7 +200,7 @@ export function genPreview(o: any, format: FormattingTypes = FormattingTypes.ESC
     if (objType === 'object') {
         return o ? genComplexPreview(o, format)
             : new StyledMessage(format)
-                .addBlock('null', [ Basic.undefined ])
+                .addBlock('null', [Basic.undefined])
                 .toString()
     }
 
@@ -202,7 +211,7 @@ export function genFunc(func: Function) {
     return func.toString()
 }
 
-export function genPartialArrayLike(arr: ArrayLike<any>, maxItemCount=10, format: FormattingTypes = FormattingTypes.ESCAPE_SEQ) {
+export function genPartialArrayLike(arr: ArrayLike<any>, maxItemCount = 10, format: FormattingTypes = FormattingTypes.ESCAPE_SEQ) {
     const message = new StyledMessage(format)
     const arrCtorName = getCtorName(arr)
     const isArray = arrCtorName === 'Array'
@@ -210,7 +219,7 @@ export function genPartialArrayLike(arr: ArrayLike<any>, maxItemCount=10, format
     message
         .addStyle(Basic.raw)
         .addText((isArray ? '' : arrCtorName) + '(')
-        .addBlock(arr.length.toString(), [ Basic.number ])
+        .addBlock(arr.length.toString(), [Basic.number])
         .addText(`) ${isArray ? '[' : '{'}`)
 
     for (let count = 0; count < arr.length; count++) {
@@ -222,13 +231,13 @@ export function genPartialArrayLike(arr: ArrayLike<any>, maxItemCount=10, format
         }
 
         if (count) {
-            message.addBlock(', ', [ Basic.raw ])
+            message.addBlock(', ', [Basic.raw])
         }
 
         if (count in arr) {
             message.addText(genPreview(item, format))
         } else {
-            message.addBlock('empty', [ ObjectProp.prototype ])
+            message.addBlock('empty', [ObjectProp.prototype])
         }
     }
 
@@ -237,7 +246,7 @@ export function genPartialArrayLike(arr: ArrayLike<any>, maxItemCount=10, format
         .toString()
 }
 
-export function genPartialIterable(it: Iterable<any>, maxItemCount=10, format: FormattingTypes = FormattingTypes.ESCAPE_SEQ) {
+export function genPartialIterable(it: Iterable<any>, maxItemCount = 10, format: FormattingTypes = FormattingTypes.ESCAPE_SEQ) {
     const message = new StyledMessage(format)
 
     let count = 0
@@ -253,7 +262,7 @@ export function genPartialIterable(it: Iterable<any>, maxItemCount=10, format: F
         }
 
         if (count) {
-            message.addBlock(', ', [ Basic.raw ])
+            message.addBlock(', ', [Basic.raw])
         }
 
         count++
@@ -267,7 +276,7 @@ export function genPartialIterable(it: Iterable<any>, maxItemCount=10, format: F
 
 export function genPartialEntries(
     e: { entries(): IterableIterator<[any, any]> },
-    maxItemCount=10,
+    maxItemCount = 10,
     format: FormattingTypes = FormattingTypes.ESCAPE_SEQ
 ) {
     const message = new StyledMessage(format)
@@ -278,19 +287,19 @@ export function genPartialEntries(
         .addStyle(Basic.raw)
         .addText(getCtorName(e) + ' {')
 
-    for (const [ k ,v ] of e.entries()) {
+    for (const [k, v] of e.entries()) {
         if (count === maxItemCount) {
             message.addText(', …')
             break
         }
 
         if (count) {
-            message.addBlock(', ', [ Basic.raw ])
+            message.addBlock(', ', [Basic.raw])
         }
 
         message
             .addText(genKey(k, true, format))
-            .addBlock(' => ', [ Basic.raw ])
+            .addBlock(' => ', [Basic.raw])
             .addText(genPreview(v, format))
 
         count++
@@ -303,7 +312,7 @@ export function genPartialEntries(
 
 export function genPartialObject(
     o: any,
-    maxItemCount=10,
+    maxItemCount = 10,
     format: FormattingTypes = FormattingTypes.ESCAPE_SEQ
 ) {
     const message = new StyledMessage(format)
@@ -315,19 +324,19 @@ export function genPartialObject(
         .addStyle(Basic.raw)
         .addText((ctorName === 'Object' ? '' : `${ctorName} `) + '{')
 
-    for (const [ k ,v ] of Object.entries(o)) {
+    for (const [k, v] of Object.entries(o)) {
         if (count === maxItemCount) {
             message.addText(', …')
             break
         }
 
         if (count) {
-            message.addBlock(', ', [ Basic.raw ])
+            message.addBlock(', ', [Basic.raw])
         }
 
         message
             .addText(genKey(k, false, format))
-            .addBlock(': ', [ Basic.raw ])
+            .addBlock(': ', [Basic.raw])
             .addText(genPreview(v, format))
 
         count++
@@ -338,7 +347,7 @@ export function genPartialObject(
         .toString()
 }
 
-export function genPartial(o: any, maxItemCount=10, format: FormattingTypes = FormattingTypes.ESCAPE_SEQ) {
+export function genPartial(o: any, maxItemCount = 10, format: FormattingTypes = FormattingTypes.ESCAPE_SEQ) {
     if (typeof o === 'object') {
         if (o === null) {
             return genPreview(o, format)
@@ -347,7 +356,7 @@ export function genPartial(o: any, maxItemCount=10, format: FormattingTypes = Fo
         if (typeof o.length === 'number') {
             return genPartialArrayLike(o, maxItemCount, format)
         }
-    
+
         if (
             typeof o[Symbol.iterator] === 'function' &&
             !(o instanceof Map)
@@ -358,7 +367,7 @@ export function genPartial(o: any, maxItemCount=10, format: FormattingTypes = Fo
         if (typeof o.entries === 'function') {
             return genPartialEntries(o, maxItemCount, format)
         }
-    
+
         if (o !== null) {
             return genPartialObject(o, maxItemCount, format)
         }
@@ -367,7 +376,7 @@ export function genPartial(o: any, maxItemCount=10, format: FormattingTypes = Fo
     return genPreview(o, format)
 }
 
-export function genObjectMessage(o: any, addons: ((t: IToken, m: MultilineMessage, f: FormattingTypes, p: number) => void)[], format: FormattingTypes = FormattingTypes.ESCAPE_SEQ, paddingSize=2) {
+export function genObjectMessage(o: any, addons: ((t: IToken, m: MultilineMessage, f: FormattingTypes, p: number) => void)[], format: FormattingTypes = FormattingTypes.ESCAPE_SEQ, paddingSize = 2) {
     const tokenTree = parse(o)
     const message = new MultilineMessage(format, paddingSize)
 
@@ -378,7 +387,21 @@ export function genObjectMessage(o: any, addons: ((t: IToken, m: MultilineMessag
     return message.toString()
 }
 
-export function genMessage(o: any, p: number, f=FormattingTypes.ESCAPE_SEQ) {
+export const getDefaultPlugins = () => [
+    instanceScope,
+    arrayLike,
+    entries,
+    objectField,
+    accessor,
+    prototypeEnumerableFields,
+    getterSetter,
+]
+
+export function genMessage(o: any, p: number, f = FormattingTypes.ESCAPE_SEQ) {
+    if (typeof o === 'string') {
+        return o
+    }
+
     if (typeof o === 'function') {
         return genFunc(o)
     }
@@ -393,7 +416,7 @@ export function genMessage(o: any, p: number, f=FormattingTypes.ESCAPE_SEQ) {
         entries,
         objectField,
         accessor,
-        o instanceof Set ? () => {} : prototypeEnumerableFields,
+        o instanceof Set ? () => { } : prototypeEnumerableFields,
         getterSetter,
     ], f, p)
 }

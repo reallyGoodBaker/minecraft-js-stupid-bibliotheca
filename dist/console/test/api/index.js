@@ -579,7 +579,19 @@ function genObjectMessage(o, addons, format = FormattingTypes.ESCAPE_SEQ, paddin
     });
     return message.toString();
 }
+const getDefaultPlugins = () => [
+    instanceScope,
+    arrayLike,
+    entries,
+    objectField,
+    accessor,
+    prototypeEnumerableFields,
+    getterSetter,
+];
 function genMessage(o, p, f = FormattingTypes.ESCAPE_SEQ) {
+    if (typeof o === 'string') {
+        return o;
+    }
     if (typeof o === 'function') {
         return genFunc(o);
     }
@@ -733,50 +745,127 @@ const prototypeEnumerableFields = (t, m, f, p) => {
     }
 };
 
-let $ = {
-    started: false,
-    out: Function.prototype,
-    err: Function.prototype,
-};
+const specifiers = '%s,%d,%i,%f,%o,%O'.split(',');
+function findSpecifier(str) {
+    for (const specifier of specifiers) {
+        if (str.includes(specifier)) {
+            return specifier;
+        }
+    }
+    return null;
+}
+function format(str, spec, arg, p, f) {
+    let result = null;
+    switch (spec) {
+        case '%s':
+            result = String(arg);
+            break;
+        case '%d':
+        case '%i':
+            result = typeof arg === 'symbol'
+                ? NaN
+                : parseInt(arg);
+        case '%f':
+            result = typeof arg === 'symbol'
+                ? NaN
+                : parseFloat(arg);
+        case '%o':
+            result = genMessage(arg, p, f);
+        case '%O':
+            result = genObjectMessage(arg, getDefaultPlugins(), f, p);
+    }
+    return str.replace(spec, result);
+}
+
 const defaultLoggerOption = {
     paddingSize: 2,
     format: FormattingTypes.ESCAPE_SEQ,
 };
 const outBuffer = [];
+const errBuffer = [];
+const schedule = globalThis.requestIdleCallback || globalThis.setTimeout || Function.prototype;
+const $start = () => {
+    const handler = () => {
+        const spliced = outBuffer.splice(0, outBuffer.length);
+        for (const arg of spliced) {
+            $.out(genMessage(arg, $.paddingSize, $.format));
+        }
+    };
+    const execute = () => schedule(() => {
+        handler();
+        execute();
+    });
+    $.started = true;
+    execute();
+};
+let $ = {
+    paddingSize: 2,
+    format: FormattingTypes.ESCAPE_SEQ,
+    started: false,
+    start: $start,
+    out: Function.prototype,
+    err: Function.prototype,
+};
 function printer(level, args, opt = defaultLoggerOption) {
     let _args = Array.isArray(args) ? args : [args];
-    if (!$.started) {
-        outBuffer.concat(..._args);
+    if (level === 'error') {
+        if (!$.started) {
+            errBuffer.concat(..._args);
+            return;
+        }
+        if (errBuffer.length) {
+            _args = errBuffer.splice(0, errBuffer.length).concat(..._args);
+        }
+        for (const arg of _args) {
+            $.err(genMessage(arg, opt.paddingSize, opt.format));
+        }
+    }
+    outBuffer.push(..._args);
+}
+function formatter(args) {
+    if (args.length === 1 ||
+        typeof args[0] !== 'string') {
+        return args;
+    }
+    let [target, current] = args;
+    let spec = null;
+    if ((spec = findSpecifier(target)) === null) {
+        return args;
+    }
+    target = format(target, spec, current, $.paddingSize, $.format);
+    return formatter([target, ...args.slice(2)]);
+}
+function logger(level, ...args) {
+    if (!args.length) {
         return;
     }
-    if (outBuffer.length) {
-        _args = outBuffer.splice(0, outBuffer.length).concat(..._args);
+    const [first, ...rest] = args;
+    if (!rest.length) {
+        printer(level, first);
+        return;
     }
-    for (const arg of _args) {
-        $.out(genMessage(arg, opt.paddingSize, opt.format));
-    }
+    printer(level, formatter(args));
 }
 
-$.started = true;
-$.out = v => console.log(v);
-const obj1 = {
-    a: 'cool',
-    b: 1,
-    c: 'good'
-};
-let set = new Set([1, , 2, 3, 4, 'foo', 'bar']);
-let sym = Symbol('sym');
-const obj2 = {
-    [Symbol()]: 'wow, symbol!',
-    obj1,
-    get a() { return set; },
-    get b() { return Math.random(); },
-    [sym]: () => 1,
-};
-printer('error', [
-    obj2,
-    obj1,
-    set,
-    'Hello World',
-    114.514,
-]);
+function createConsole(err, out) {
+    out ??= err;
+    $.err = err;
+    $.out = out;
+    const _console = {
+        log: (...args) => logger('log', ...args),
+        info: (...args) => logger('info', ...args),
+        warn: (...args) => logger('warn', ...args),
+        error: (...args) => logger('error', ...args),
+    };
+    $.start();
+    return _console;
+}
+function injectConsole(err, out) {
+    globalThis.console = createConsole(err, out);
+}
+
+// import { $, logger, printer } from './logger'
+injectConsole(console.error, console.log);
+console.log({
+    foo: 'bar'
+});
