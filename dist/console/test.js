@@ -1,6 +1,6 @@
 import { logger, $ } from './index.js'
 
-$.started = true
+$.start()
 $.out = v => console.log(v)
 
 const obj1 = {
@@ -9,7 +9,8 @@ const obj1 = {
     c: 'good'
 }
 
-let set = new Set([ 1, , 2, 3, 4, 'foo', 'bar' ])
+let array = [ 1, ,, 2, 3, 4, 'foo', 'bar' ]
+let set = new Set(array)
 let sym = Symbol('sym')
 
 const obj2 = {
@@ -18,6 +19,15 @@ const obj2 = {
     get a() { return set },
     get b() { return Math.random() },
     [sym]: () => 1,
+    arr: array,
+    ok() {},
 }
 
+obj2.self = obj2
+
 logger('log', obj2)
+logger('log', {
+    foo() {
+        return 'bar'
+    }
+})

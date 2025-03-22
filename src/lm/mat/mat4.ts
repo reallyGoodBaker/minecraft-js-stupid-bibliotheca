@@ -233,121 +233,121 @@ export class Matrix extends Float64Array {
     }
 
     setTranslation(x: number, y: number, z: number) {
-        this.m14 = x;
-        this.m24 = y;
-        this.m34 = z;
+        this.m14 = x
+        this.m24 = y
+        this.m34 = z
 
         return this
     }
 
     setRotation(angle: number, axis: Vec3) {
         Vec3.normalize(axis)
-        const sin = Math.sin(angle);
-        const cos = Math.cos(angle);
-        const x = axis.x;
-        const y = axis.y;
-        const z = axis.z;
-        const t = 1 - cos;
+        const sin = Math.sin(angle)
+        const cos = Math.cos(angle)
+        const x = axis.x
+        const y = axis.y
+        const z = axis.z
+        const t = 1 - cos
         
-        const a00 = t * x * x + cos;
-        const a01 = t * x * y - sin * z;
-        const a02 = t * x * z + sin * y;
-        const a10 = t * x * y + sin * z;
-        const a11 = t * y * y + cos;
-        const a12 = t * y * z - sin * x;
-        const a20 = t * x * z - sin * y;
-        const a21 = t * y * z + sin * x;
-        const a22 = t * z * z + cos;
+        const a00 = t * x * x + cos
+        const a01 = t * x * y - sin * z
+        const a02 = t * x * z + sin * y
+        const a10 = t * x * y + sin * z
+        const a11 = t * y * y + cos
+        const a12 = t * y * z - sin * x
+        const a20 = t * x * z - sin * y
+        const a21 = t * y * z + sin * x
+        const a22 = t * z * z + cos
         
-        this.m11 = a00;
-        this.m12 = a01;
-        this.m13 = a02;
-        this.m21 = a10;
-        this.m22 = a11;
-        this.m23 = a12;
-        this.m31 = a20;
-        this.m32 = a21;
-        this.m33 = a22;
+        this.m11 = a00
+        this.m12 = a01
+        this.m13 = a02
+        this.m21 = a10
+        this.m22 = a11
+        this.m23 = a12
+        this.m31 = a20
+        this.m32 = a21
+        this.m33 = a22
 
         return this
     }
 
     setScale(x: number, y: number, z: number) {
-        this.m11 *= x;
-        this.m22 *= y;
-        this.m33 *= z;
+        this.m11 *= x
+        this.m22 *= y
+        this.m33 *= z
 
         return this
     }
 
     setRotationX(angle: number) {
-        const sin = Math.sin(angle);
-        const cos = Math.cos(angle);
+        const sin = Math.sin(angle)
+        const cos = Math.cos(angle)
         
-        this.m11 = 1;
-        this.m12 = 0;
-        this.m13 = 0;
-        this.m21 = 0;
-        this.m22 = cos;
-        this.m23 = sin;
-        this.m31 = 0;
-        this.m32 = -sin;
-        this.m33 = cos;
+        this.m11 = 1
+        this.m12 = 0
+        this.m13 = 0
+        this.m21 = 0
+        this.m22 = cos
+        this.m23 = sin
+        this.m31 = 0
+        this.m32 = -sin
+        this.m33 = cos
 
         return this
     }
 
     setRotationY(angle: number) {
-        const sin = Math.sin(angle);
-        const cos = Math.cos(angle);
+        const sin = Math.sin(angle)
+        const cos = Math.cos(angle)
         
-        this.m11 = cos;
-        this.m12 = 0;
-        this.m13 = -sin;
-        this.m21 = 0;
-        this.m22 = 1;
-        this.m23 = 0;
-        this.m31 = sin;
-        this.m32 = 0;
-        this.m33 = cos;
+        this.m11 = cos
+        this.m12 = 0
+        this.m13 = -sin
+        this.m21 = 0
+        this.m22 = 1
+        this.m23 = 0
+        this.m31 = sin
+        this.m32 = 0
+        this.m33 = cos
 
         return this
     }
 
     setRotationZ(angle: number) {
-        const sin = Math.sin(angle);
-        const cos = Math.cos(angle);
+        const sin = Math.sin(angle)
+        const cos = Math.cos(angle)
         
-        this.m11 = cos;
-        this.m12 = sin;
-        this.m13 = 0;
-        this.m21 = -sin;
-        this.m22 = cos;
-        this.m23 = 0;
-        this.m31 = 0;
-        this.m32 = 0;
-        this.m33 = 1;
+        this.m11 = cos
+        this.m12 = sin
+        this.m13 = 0
+        this.m21 = -sin
+        this.m22 = cos
+        this.m23 = 0
+        this.m31 = 0
+        this.m32 = 0
+        this.m33 = 1
 
         return this
     }
 
     setRotationXYZ(yaw: number, pitch: number, roll: number) {
-        const sinYaw = Math.sin(yaw);
-        const cosYaw = Math.cos(yaw);
-        const sinPitch = Math.sin(pitch);
-        const cosPitch = Math.cos(pitch);
-        const sinRoll = Math.sin(roll);
-        const cosRoll = Math.cos(roll);
+        const sinYaw = Math.sin(yaw)
+        const cosYaw = Math.cos(yaw)
+        const sinPitch = Math.sin(pitch)
+        const cosPitch = Math.cos(pitch)
+        const sinRoll = Math.sin(roll)
+        const cosRoll = Math.cos(roll)
         
-        this.m11 = cosYaw * cosRoll + sinYaw * sinPitch * sinRoll;
-        this.m12 = cosYaw * sinRoll - sinYaw * sinPitch * cosRoll;
-        this.m13 = sinYaw * cosPitch;
-        this.m21 = sinYaw * cosRoll - cosYaw * sinPitch * sinRoll; 
-        this.m22 = cosYaw * cosRoll - sinYaw * sinPitch * cosRoll;
-        this.m23 = cosYaw * sinPitch;
-        this.m31 = sinYaw * sinRoll + cosYaw * sinPitch * cosRoll;
-        this.m32 = -sinYaw * cosRoll + cosYaw * sinPitch * sinRoll;
-        this.m33 = cosYaw * cosPitch;
+        this.m11 = cosYaw * cosRoll + sinYaw * sinPitch * sinRoll
+        this.m12 = cosYaw * sinRoll - sinYaw * sinPitch * cosRoll
+        this.m13 = sinYaw * cosPitch
+        this.m21 = sinYaw * cosRoll - cosYaw * sinPitch * sinRoll 
+        this.m22 = cosYaw * cosRoll - sinYaw * sinPitch * cosRoll
+        this.m23 = cosYaw * sinPitch
+        this.m31 = sinYaw * sinRoll + cosYaw * sinPitch * cosRoll
+        this.m32 = -sinYaw * cosRoll + cosYaw * sinPitch * sinRoll
+        this.m33 = cosYaw * cosPitch
 
         return this
     }
@@ -415,6 +415,7 @@ export class Matrix extends Float64Array {
         return Matrix.multiply(this, t)
     }
 
+    //@ts-ignore
     valueOf() {
         return new Float64Array(this)
     }

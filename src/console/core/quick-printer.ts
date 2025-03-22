@@ -2,12 +2,12 @@ import { getCtorName } from "./object.js"
 import { parse } from "./parse.js"
 import { IToken, createToken } from "./token.js"
 
-type WriteStream = {
+type Writable = {
     write(msg: string): void
 }
 
 export class Printer {
-    #out: WriteStream | null = null
+    #out: Writable | null = null
 
     print(obj: any) {
         const data = parse(obj)
@@ -103,7 +103,7 @@ export class Printer {
         return obj.toString()
     }
 
-    constructor(outStream?: WriteStream) {
+    constructor(outStream?: Writable) {
         if (outStream) {
             this.#out = outStream
         }
